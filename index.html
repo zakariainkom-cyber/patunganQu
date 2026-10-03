@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full bg-stone-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KopiKas - Rekap Patungan & Belanja Bahan Kopi (Real-time Cloud)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        espresso: {
+                            50: '#fdfbf7',
+                            100: '#f7f2e8',
+                            200: '#ebdcc5',
+                            500: '#966e44',
+                            600: '#78522f',
+                            700: '#5c3d23',
+                            800: '#3d2615',
+                            900: '#23140a',
+                        },
+                        amberbrand: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f5f5f4; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-full { width: 100% !important; max-width: 100% !important; }
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col bg-stone-100 text-stone-800 antialiased selection:bg-espresso-600 selection:text-white">
+
+    <!-- Top Header Navigation -->
+    <header class="bg-espresso-900 text-stone-100 sticky top-0 z-30 shadow-lg border-b border-espresso-800 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Branding -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-amberbrand-500 text-espresso-900 flex items-center justify-center font-bold text-xl shadow-md shadow-amberbrand-500/20">
+                        <i class="fa-solid fa-mug-hot"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="font-bold text-lg leading-tight tracking-wide text-amber-100">KopiKas</h1>
+                            <!-- Realtime Status Badge -->
+                            <span id="cloudStatusBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> Offline Mode
+                            </span>
+                        </div>
+                        <p class="text-xs text-stone-400">Patungan & Belanja Bahan Kopi (Cloud Sync)</p>
+                    </div>
+                </div>
+
+                <!-- Header Action Buttons -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button onclick="openFirebaseSettingsModal()" class="px-3 py-1.5 text-xs font-semibold bg-amberbrand-600 hover:bg-amberbrand-500 text-white rounded-lg transition shadow-sm flex items-center gap-1.5 border border-amber-500">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span class="hidden sm:inline">Set Up Cloud Sync</span>
+                    </button>
+                    <button onclick="exportDataJSON()" class="px-3 py-1.5 text-xs font-semibold bg-espresso-800 hover:bg-espresso-700 text-amber-200 rounded-lg transition border border-espresso-700 flex items-center gap-1.5" title="Backup Data JSON">
+                        <i class="fa-solid fa-download text-amberbrand-400"></i>
+                        <span class="hidden sm:inline">Export</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Cloud Status Banner Notice -->
+    <div id="cloudNoticeBanner" class="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-xs text-amber-900 no-print flex items-center justify-between">
+        <div class="flex items-center gap-2 max-w-7xl mx-auto w-full justify-between">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-amber-600 text-sm"></i>
+                <span id="cloudNoticeText">Saat ini menggunakan <strong>Penyimpanan Lokal (Offline Demo)</strong>. Hubungkan ke Firebase agar teman-teman dapat melihat data secara real-time.</span>
+            </div>
+            <button onclick="openFirebaseSettingsModal()" class="font-bold underline hover:text-amber-700 whitespace-nowrap ml-2">
+                Hubungkan Cloud Sekarang &rarr;
+            </button>
+        </div>
+    </div>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Global Filter & Period Selector Bar -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-200/90 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-amber-50 text-amberbrand-600 rounded-xl border border-amber-100">
+                    <i class="fa-solid fa-calendar-days text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="text-xs font-bold text-stone-400 uppercase tracking-wider">Periode Rekap Laporan & Patungan</h2>
+                    <p class="text-base font-bold text-espresso-900" id="currentPeriodDisplay">Semua Bulan</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <div class="flex-1 md:flex-none min-w-[140px]">
+                    <label class="block text-xs font-medium text-stone-500 mb-1">Filter Bulan</label>
+                    <select id="filterMonth" onchange="applyFilters()" class="w-full bg-stone-50 border border-stone-300 text-stone-700 text-sm rounded-xl focus:ring-espresso-500 focus:border-espresso-500 p-2 font-medium">
+                        <option value="ALL">Semua Bulan</option>
+                        <option value="1">Januari</option>
+                        <option value="2">Februari</option>
+                        <option value="3">Maret</option>
+                        <option value="4">April</option>
+                        <option value="5">Mei</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">Agustus</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                </div>
+                <div class="flex-1 md:flex-none min-w-[110px]">
+                    <label class="block text-xs font-medium text-stone-500 mb-1">Filter Tahun</label>
+                    <select id="filterYear" onchange="applyFilters()" class="w-full bg-stone-50 border border-stone-300 text-stone-700 text-sm rounded-xl focus:ring-espresso-500 focus:border-espresso-500 p-2 font-medium">
+                        <option value="2026" selected>2026</option>
+                        <option value="2025">2025</option>
+                    </select>
+                </div>
+                <div class="flex-1 md:flex-none min-w-[130px]">
+                    <label class="block text-xs font-medium text-stone-500 mb-1">Filter Bahan</label>
+                    <select id="filterBahan" onchange="applyFilters()" class="w-full bg-stone-50 border border-stone-300 text-stone-700 text-sm rounded-xl focus:ring-espresso-500 focus:border-espresso-500 p-2 font-medium">
+                        <option value="ALL">Semua Bahan</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Total Patungan Masuk -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/90 relative overflow-hidden group hover:shadow-md transition">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-stone-400 uppercase tracking-wider">Total Kas Patungan</span>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-hand-holding-dollar text-sm"></i>
+                    </div>
+                </div>
+                <div class="text-2xl font-extrabold text-stone-900 tracking-tight mb-1" id="kpiTotalPatungan">Rp 0</div>
+                <p class="text-xs text-stone-500 flex items-center gap-1">
+                    <span class="text-emerald-600 font-semibold" id="kpiLunasCount">0</span> iuran lunas
+                </p>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500"></div>
+            </div>
+
+            <!-- Total Pengeluaran Bahan -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/90 relative overflow-hidden group hover:shadow-md transition">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-stone-400 uppercase tracking-wider">Pengeluaran Bahan</span>
+                    <div class="w-9 h-9 rounded-xl bg-amber-50 text-amberbrand-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-cart-shopping text-sm"></i>
+                    </div>
+                </div>
+                <div class="text-2xl font-extrabold text-stone-900 tracking-tight mb-1" id="kpiTotalPengeluaran">Rp 0</div>
+                <p class="text-xs text-stone-500 flex items-center gap-1">
+                    <span class="text-amberbrand-600 font-semibold" id="kpiNotaCount">0</span> nota transaksi
+                </p>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-amberbrand-500"></div>
+            </div>
+
+            <!-- Sisa Saldo Kas -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/90 relative overflow-hidden group hover:shadow-md transition">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-stone-400 uppercase tracking-wider">Sisa Saldo Kas</span>
+                    <div class="w-9 h-9 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-piggy-bank text-sm"></i>
+                    </div>
+                </div>
+                <div class="text-2xl font-extrabold text-stone-900 tracking-tight mb-1" id="kpiSisaSaldo">Rp 0</div>
+                <p class="text-xs text-stone-500" id="kpiStatusSaldo">Status Saldo Aman</p>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-sky-500"></div>
+            </div>
+
+            <!-- Total Volume / QTY Bahan Dibeli -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/90 relative overflow-hidden group hover:shadow-md transition">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-stone-400 uppercase tracking-wider">Total Item Dibelanjakan</span>
+                    <div class="w-9 h-9 rounded-xl bg-espresso-50 text-espresso-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-boxes-packing text-sm"></i>
+                    </div>
+                </div>
+                <div class="text-2xl font-extrabold text-stone-900 tracking-tight mb-1" id="kpiTotalQTYVolume">0 Item</div>
+                <p class="text-xs text-stone-500" id="kpiTopBahan">Bahan terbanyak: -</p>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-espresso-700"></div>
+            </div>
+        </div>
+
+        <!-- Ingredient QTY & Total Spent Summary Cards -->
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/90 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-espresso-100 text-espresso-800 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-cubes-stacked"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-stone-800">Ringkasan Akumulasi Bahan Kopi (Hasil Akhir)</h3>
+                        <p class="text-xs text-stone-400">Total volume kuantitas & nominal belanja per jenis bahan kopi</p>
+                    </div>
+                </div>
+                <button onclick="window.print()" class="no-print text-xs font-semibold text-espresso-700 bg-stone-100 hover:bg-stone-200 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 w-max">
+                    <i class="fa-solid fa-print"></i> Cetak Rekap Laporan
+                </button>
+            </div>
+
+            <!-- Dynamic Ingredients Summary Grid -->
+            <div id="ingredientSummaryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- Dynamic cards injected via JS -->
+            </div>
+        </div>
+
+        <!-- Charts Grid Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 no-print">
+            <!-- Line/Bar Chart: Tren Kas & Pengeluaran -->
+            <div class="lg:col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-stone-200/90 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-stone-800">Tren Kas Patungan vs Belanja Bahan</h3>
+                        <p class="text-xs text-stone-400">Grafik perbandingan arus masuk dan pengeluaran per bulan</p>
+                    </div>
+                    <span class="p-2 bg-stone-100 rounded-lg text-stone-600 text-xs font-semibold">
+                        <i class="fa-solid fa-chart-column mr-1"></i> Bulanan
+                    </span>
+                </div>
+                <div class="relative h-64 sm:h-72 w-full">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Doughnut Chart: Proporsi Belanja per Bahan -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/90 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-stone-800">Proporsi Pengeluaran Bahan</h3>
+                        <p class="text-xs text-stone-400">Persentase biaya berdasarkan jenis bahan kopi</p>
+                    </div>
+                    <span class="p-2 bg-stone-100 rounded-lg text-stone-600 text-xs font-semibold">
+                        <i class="fa-solid fa-chart-pie mr-1"></i> Proporsi
+                    </span>
+                </div>
+                <div class="relative h-64 w-full flex items-center justify-center">
+                    <canvas id="ingredientPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Management Section (Tab Navigation) -->
+        <div class="bg-white rounded-2xl shadow-sm border border-stone-200/90 overflow-hidden no-print">
+            <!-- Navigation Tabs -->
+            <div class="border-b border-stone-200 bg-stone-50/70 px-4 pt-3 flex flex-wrap gap-2">
+                <button id="tabBtnPatungan" onclick="switchTab('patungan')" class="px-4 py-2.5 text-sm font-semibold rounded-t-xl transition border-b-2 border-emerald-600 text-emerald-600 bg-white shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-users text-xs"></i>
+                    <span>Kas Patungan Anggota</span>
+                </button>
+                <button id="tabBtnPengeluaran" onclick="switchTab('pengeluaran')" class="px-4 py-2.5 text-sm font-semibold rounded-t-xl transition border-b-2 border-transparent text-stone-500 hover:text-stone-800 hover:bg-stone-100 flex items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span>Catat Belanja Bahan (Multi-Item)</span>
+                </button>
+                <button id="tabBtnMasterBahan" onclick="switchTab('masterBahan')" class="px-4 py-2.5 text-sm font-semibold rounded-t-xl transition border-b-2 border-transparent text-stone-500 hover:text-stone-800 hover:bg-stone-100 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-xs"></i>
+                    <span>Kelola Preset Bahan Kopi</span>
+                </button>
+            </div>
+
+            <div class="p-4 sm:p-6">
+                <!-- ================= TAB 1: KAS PATUNGAN ANGGOTA ================= -->
+                <div id="tabContentPatungan" class="space-y-6">
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <!-- Form Patungan -->
+                        <div class="w-full lg:w-1/3 bg-stone-50 p-4 sm:p-5 rounded-2xl border border-stone-200">
+                            <h4 class="font-bold text-stone-800 text-sm mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-hand-holding-dollar text-emerald-600"></i> Catat Patungan Anggota
+                            </h4>
+                            <form id="formPatungan" onsubmit="handleSavePatungan(event)" class="space-y-3">
+                                <input type="hidden" id="patunganId">
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1">Nama Anggota</label>
+                                    <input type="text" id="patunganNama" required placeholder="Contoh: Andi Barista" class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-stone-600 mb-1">Bulan</label>
+                                        <select id="patunganBulan" required class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                            <option value="1">Januari</option>
+                                            <option value="2">Februari</option>
+                                            <option value="3">Maret</option>
+                                            <option value="4">April</option>
+                                            <option value="5">Mei</option>
+                                            <option value="6">Juni</option>
+                                            <option value="7">Juli</option>
+                                            <option value="8">Agustus</option>
+                                            <option value="9">September</option>
+                                            <option value="10">Oktober</option>
+                                            <option value="11">November</option>
+                                            <option value="12">Desember</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-stone-600 mb-1">Tahun</label>
+                                        <input type="number" id="patunganTahun" value="2026" required class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1">Nominal Patungan (Rp)</label>
+                                    <input type="number" id="patunganJumlah" required min="1000" step="1000" placeholder="150000" class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1">Status Pembayaran</label>
+                                    <select id="patunganStatus" class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                        <option value="Lunas">Lunas</option>
+                                        <option value="Belum Lunas">Belum Lunas</option>
+                                    </select>
+                                </div>
+                                <div class="pt-2 flex gap-2">
+                                    <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-floppy-disk"></i> Simpan Data Patungan
+                                    </button>
+                                    <button type="button" onclick="resetFormPatungan()" class="bg-stone-200 hover:bg-stone-300 text-stone-700 font-semibold text-sm py-2.5 px-3 rounded-xl transition">
+                                        Batal
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Table Patungan -->
+                        <div class="w-full lg:w-2/3 flex flex-col">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                <div>
+                                    <h4 class="font-bold text-stone-800 text-sm">Daftar Rekap Kas Patungan</h4>
+                                    <p class="text-xs text-stone-400">Status iuran anggota terfilter berdasarkan periode aktif</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200" id="patunganTableCount">0 Data</span>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto border border-stone-200 rounded-2xl custom-scrollbar max-h-[420px]">
+                                <table class="w-full text-left text-xs sm:text-sm">
+                                    <thead class="bg-stone-100 text-stone-600 uppercase text-[11px] font-bold tracking-wider sticky top-0 z-10 border-b border-stone-200">
+                                        <tr>
+                                            <th class="py-3 px-4">Nama Anggota</th>
+                                            <th class="py-3 px-4">Periode</th>
+                                            <th class="py-3 px-4">Nominal</th>
+                                            <th class="py-3 px-4">Status</th>
+                                            <th class="py-3 px-4 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablePatunganBody" class="divide-y divide-stone-200 bg-white">
+                                        <!-- Dynamic Row Insertion -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= TAB 2: PENGELUARAN MULTI-ITEM ================= -->
+                <div id="tabContentPengeluaran" class="space-y-6 hidden">
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <!-- Multi-Item Expense Form -->
+                        <div class="w-full lg:w-1/2 bg-stone-50 p-4 sm:p-5 rounded-2xl border border-stone-200 flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-center justify-between mb-4 border-b border-stone-200 pb-2">
+                                    <h4 class="font-bold text-stone-800 text-sm flex items-center gap-2" id="formPengeluaranTitle">
+                                        <i class="fa-solid fa-cart-plus text-amberbrand-600"></i> Form Belanja Bahan (Multi-Item)
+                                    </h4>
+                                    <span class="text-[11px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-semibold">1 Nota Banyak Item</span>
+                                </div>
+
+                                <form id="formPengeluaran" onsubmit="handleSavePengeluaran(event)" class="space-y-4">
+                                    <input type="hidden" id="pengeluaranId">
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-stone-600 mb-1">Tanggal Transaksi</label>
+                                            <input type="date" id="pengeluaranTanggal" required class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-amberbrand-500 focus:outline-none">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-stone-600 mb-1">Pembeli / PIC Nota</label>
+                                            <input type="text" id="pengeluaranPembeli" placeholder="Contoh: Barista Andi" class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-amberbrand-500 focus:outline-none">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-xs font-semibold text-stone-600 mb-1">Catatan / Nama Toko (Opsional)</label>
+                                        <input type="text" id="pengeluaranKeterangan" placeholder="Contoh: Toko Sangrai Kopi Utama" class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-amberbrand-500 focus:outline-none">
+                                    </div>
+
+                                    <!-- Dynamic Items Container -->
+                                    <div class="space-y-2 pt-2">
+                                        <div class="flex items-center justify-between">
+                                            <label class="block text-xs font-bold text-stone-700 uppercase tracking-wider">Rincian Item Bahan Dibeli</label>
+                                            <button type="button" onclick="addExpenseItemRow()" class="text-xs text-amberbrand-600 font-bold hover:text-amberbrand-700 flex items-center gap-1 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                                                <i class="fa-solid fa-plus text-[10px]"></i> Tambah Baris Item
+                                            </button>
+                                        </div>
+
+                                        <!-- Rows container -->
+                                        <div id="expenseItemsContainer" class="space-y-2 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                                            <!-- Dynamic Rows injected via JS -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Total Calculation Display -->
+                                    <div class="p-3 bg-amber-50/80 border border-amber-200 rounded-xl flex items-center justify-between">
+                                        <div>
+                                            <span class="text-xs font-bold text-stone-500 uppercase tracking-wider block">Total Belanja Nota Ini</span>
+                                            <span class="text-xs text-stone-400" id="expenseItemCountText">1 Item terinput</span>
+                                        </div>
+                                        <div class="text-xl font-extrabold text-amberbrand-600" id="pengeluaranGrandTotalDisplay">Rp 0</div>
+                                    </div>
+
+                                    <div class="pt-2 flex gap-2">
+                                        <button type="submit" class="flex-1 bg-amberbrand-600 hover:bg-amberbrand-500 text-white font-semibold text-sm py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                                            <i class="fa-solid fa-floppy-disk"></i> Simpan Transaksi Belanja
+                                        </button>
+                                        <button type="button" onclick="resetFormPengeluaran()" class="bg-stone-200 hover:bg-stone-300 text-stone-700 font-semibold text-sm py-2.5 px-3 rounded-xl transition">
+                                            Batal
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Table Data Pengeluaran -->
+                        <div class="w-full lg:w-1/2 flex flex-col">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-bold text-stone-800 text-sm">Riwayat Belanja Bahan Kopi</h4>
+                                <span class="text-xs text-stone-500" id="pengeluaranTableCount">0 Transaksi</span>
+                            </div>
+                            <div class="overflow-x-auto border border-stone-200 rounded-2xl custom-scrollbar max-h-[520px]">
+                                <table class="w-full text-left text-xs sm:text-sm">
+                                    <thead class="bg-stone-100 text-stone-600 uppercase text-[11px] font-bold tracking-wider sticky top-0 z-10 border-b border-stone-200">
+                                        <tr>
+                                            <th class="py-3 px-4">Tanggal & PIC</th>
+                                            <th class="py-3 px-4">Rincian Item Bahan Dibeli</th>
+                                            <th class="py-3 px-4">Total Belanja</th>
+                                            <th class="py-3 px-4 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tablePengeluaranBody" class="divide-y divide-stone-200 bg-white">
+                                        <!-- Dynamic Row Insertion -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= TAB 3: KELOLA PRESET BAHAN ================= -->
+                <div id="tabContentMasterBahan" class="space-y-6 hidden">
+                    <div class="flex flex-col lg:flex-row gap-6">
+                        <!-- Add Ingredient Preset -->
+                        <div class="w-full lg:w-1/3 bg-stone-50 p-4 sm:p-5 rounded-2xl border border-stone-200">
+                            <h4 class="font-bold text-stone-800 text-sm mb-3 flex items-center gap-2">
+                                <i class="fa-solid fa-plus-circle text-espresso-700"></i> Tambah Preset Bahan Baru
+                            </h4>
+                            <form id="formMasterBahan" onsubmit="handleAddMasterBahan(event)" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1">Nama Jenis Bahan</label>
+                                    <input type="text" id="masterBahanNama" required placeholder="Contoh: Syrup Vanilla, Cup 16oz" class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-espresso-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-stone-600 mb-1">Default Satuan Ukur</label>
+                                    <select id="masterBahanSatuan" class="w-full text-sm p-2.5 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-espresso-500 focus:outline-none">
+                                        <option value="Kg">Kg</option>
+                                        <option value="Liter">Liter</option>
+                                        <option value="Pack">Pack</option>
+                                        <option value="Botol">Botol</option>
+                                        <option value="Pcs">Pcs</option>
+                                        <option value="Box">Box</option>
+                                        <option value="Dus">Dus</option>
+                                        <option value="Gram">Gram</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="w-full bg-espresso-800 hover:bg-espresso-700 text-white font-semibold text-sm py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-plus"></i> Tambahkan ke List Preset
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Preset Bahan List Table -->
+                        <div class="w-full lg:w-2/3 flex flex-col">
+                            <h4 class="font-bold text-stone-800 text-sm mb-3">Daftar Preset Bahan Kopi Aktif</h4>
+                            <div id="masterBahanListContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <!-- Dynamic List Items -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Firebase Cloud Sync Config Modal -->
+    <div id="firebaseModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-stone-200 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeFirebaseSettingsModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 p-2 rounded-lg">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-4 border-b border-stone-100 pb-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amberbrand-600 flex items-center justify-center text-xl font-bold">
+                    <i class="fa-solid fa-cloud"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-stone-800 text-base">Pengaturan Firebase Real-time Cloud Sync</h3>
+                    <p class="text-xs text-stone-500">Hubungkan database Firebase gratis milik Anda agar data tersinkronisasi otomatis dengan teman-teman</p>
+                </div>
+            </div>
+
+            <!-- Steps Instructions Accordion/Guide -->
+            <div class="bg-amber-50/80 border border-amber-200 rounded-xl p-3.5 mb-4 text-xs space-y-2 text-amber-900">
+                <div class="font-bold flex items-center gap-1.5 text-amber-950">
+                    <i class="fa-solid fa-lightbulb text-amber-600"></i> Cara Gratis Membuat Database Firebase (Kurang dari 2 Menit):
+                </div>
+                <ol class="list-decimal list-inside space-y-1 text-[11px] text-amber-900 leading-relaxed">
+                    <li>Buka <a href="https://console.firebase.google.com/" target="_blank" class="underline font-bold text-amber-700 hover:text-amber-900">console.firebase.google.com</a> dan login dengan Google.</li>
+                    <li>Klik <strong>Add Project</strong> &rarr; Pilih nama project (misal: "kopikas-app") &rarr; Klik Continue.</li>
+                    <li>Masuk ke <strong>Firestore Database</strong> &rarr; Klik <strong>Create Database</strong> &rarr; Pilih mode <em>Start in Test Mode</em>.</li>
+                    <li>Masuk ke <strong>Project Settings (Ikon Gear)</strong> &rarr; scroll ke paling bawah &rarr; klik ikon Web <code>&lt;/&gt;</code> &rarr; Salin objek <code>firebaseConfig</code> dan tempel di kotak di bawah ini:</li>
+                </ol>
+            </div>
+
+            <form onsubmit="handleSaveFirebaseConfig(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Paste Konfigurasi JSON / Script Config dari Firebase Console:</label>
+                    <textarea id="firebaseConfigInput" rows="7" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "kopikas.firebaseapp.com",
+  "projectId": "kopikas-project",
+  "storageBucket": "kopikas.appspot.com",
+  "messagingSenderId": "123456789",
+  "appId": "1:123456789:web:abcdef"
+}' class="w-full text-xs font-mono p-3 bg-stone-900 text-emerald-400 rounded-xl border border-stone-800 focus:ring-2 focus:ring-amberbrand-500 focus:outline-none custom-scrollbar"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <button type="button" onclick="disconnectFirebaseConfig()" class="text-xs text-rose-600 hover:text-rose-800 font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-plug-circle-xmark"></i> Putuskan / Gunakan Demo Mode
+                    </button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeFirebaseSettingsModal()" class="px-4 py-2 text-xs font-semibold bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-xl transition">
+                            Tutup
+                        </button>
+                        <button type="submit" class="px-4 py-2 text-xs font-semibold bg-amberbrand-600 hover:bg-amberbrand-500 text-white rounded-xl transition shadow-md flex items-center gap-1.5">
+                            <i class="fa-solid fa-check"></i> Simpan & Hubungkan
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <!-- Firebase ESM Scripts Initialization -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            deleteDoc, 
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase state handles
+        window.db = null;
+        window.isFirebaseActive = false;
+        window.appId = typeof __app_id !== 'undefined' ? __app_id : 'kopikas-app-v3';
+
+        const STORAGE_KEY_FIREBASE_CFG = 'kopikas_firebase_config_v3';
+
+        // Initialize Firebase Connection if config available
+        window.initFirebaseConnection = async function() {
+            let configObj = null;
+
+            // Priority 1: Check user's saved config in LocalStorage
+            const savedCfgStr = localStorage.getItem(STORAGE_KEY_FIREBASE_CFG);
+            if (savedCfgStr) {
+                try {
+                    configObj = JSON.parse(savedCfgStr);
+                } catch(e) {
+                    console.error("Invalid stored Firebase config JSON", e);
+                }
+            }
+
+            // Priority 2: Environment provided config
+            if (!configObj && typeof __firebase_config !== 'undefined' && __firebase_config) {
+                try {
+                    configObj = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+                } catch(e) {
+                    console.error("Invalid environment Firebase config", e);
+                }
+            }
+
+            if (configObj && configObj.apiKey && configObj.projectId) {
+                try {
+                    const app = initializeApp(configObj);
+                    const auth = getAuth(app);
+                    await signInAnonymously(auth);
+                    window.db = getFirestore(app);
+                    window.isFirebaseActive = true;
+
+                    updateCloudUIStatus(true, configObj.projectId);
+                    setupFirestoreRealtimeListeners();
+                    showToast('Terhubung ke Firebase Real-time Cloud!', 'success');
+                    return;
+                } catch (err) {
+                    console.error("Firebase init failed:", err);
+                    showToast('Gagal terhubung ke Firebase. Menggunakan demo mode offline.', 'error');
+                }
+            }
+
+            // Fallback: LocalStorage / Demo Mode
+            updateCloudUIStatus(false);
+            loadDataFromLocalStorage();
+        };
+
+        function updateCloudUIStatus(active, projectId = '') {
+            const badge = document.getElementById('cloudStatusBadge');
+            const noticeBanner = document.getElementById('cloudNoticeBanner');
+            const noticeText = document.getElementById('cloudNoticeText');
+
+            if (active) {
+                badge.className = "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Cloud Real-time Active`;
+
+                noticeBanner.className = "bg-emerald-50 border-b border-emerald-200 px-4 py-2 text-xs text-emerald-900 no-print flex items-center justify-between";
+                noticeText.innerHTML = `<i class="fa-solid fa-cloud-check text-emerald-600 mr-1"></i> Data tersambung secara <strong>Real-time Cloud</strong> (Project: <code>${projectId}</code>). Setiap inputan akan langsung muncul di HP/Laptop teman.`;
+            } else {
+                badge.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400"></span> Offline Demo Mode`;
+
+                noticeBanner.className = "bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs text-amber-900 no-print flex items-center justify-between";
+                noticeText.innerHTML = `Saat ini menggunakan <strong>Penyimpanan Lokal (Offline Demo)</strong>. Hubungkan ke Firebase agar teman-teman dapat melihat data secara real-time.`;
+            }
+        }
+
+        // Setup Realtime Listeners for Firestore Collections
+        function setupFirestoreRealtimeListeners() {
+            if (!window.db || !window.isFirebaseActive) return;
+
+            const patunganCol = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'patungan');
+            const pengeluaranCol = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'pengeluaran');
+            const presetCol = collection(window.db, 'artifacts', window.appId, 'public', 'data', 'presets');
+
+            // Listen to Patungan Collection
+            onSnapshot(patunganCol, (snapshot) => {
+                const list = [];
+                snapshot.forEach(docSnap => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                window.patunganList = list;
+                window.applyFilters();
+            }, (err) => console.error("Patungan snapshot error", err));
+
+            // Listen to Pengeluaran Collection
+            onSnapshot(pengeluaranCol, (snapshot) => {
+                const list = [];
+                snapshot.forEach(docSnap => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                window.pengeluaranList = list;
+                window.applyFilters();
+            }, (err) => console.error("Pengeluaran snapshot error", err));
+
+            // Listen to Preset Bahan Collection
+            onSnapshot(presetCol, (snapshot) => {
+                if (!snapshot.empty) {
+                    const list = [];
+                    snapshot.forEach(docSnap => {
+                        list.push(docSnap.data());
+                    });
+                    window.presetBahanList = list;
+                    window.populateBahanDropdownOptions();
+                    window.applyFilters();
+                }
+            }, (err) => console.error("Preset snapshot error", err));
+        }
+
+        // Expose Cloud DB mutation functions globally
+        window.savePatunganItemCloud = async function(item) {
+            if (window.isFirebaseActive && window.db) {
+                const docRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'patungan', item.id);
+                await setDoc(docRef, item);
+            }
+        };
+
+        window.deletePatunganItemCloud = async function(id) {
+            if (window.isFirebaseActive && window.db) {
+                const docRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'patungan', id);
+                await deleteDoc(docRef);
+            }
+        };
+
+        window.savePengeluaranItemCloud = async function(nota) {
+            if (window.isFirebaseActive && window.db) {
+                const docRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'pengeluaran', nota.id);
+                await setDoc(docRef, nota);
+            }
+        };
+
+        window.deletePengeluaranItemCloud = async function(id) {
+            if (window.isFirebaseActive && window.db) {
+                const docRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'pengeluaran', id);
+                await deleteDoc(docRef);
+            }
+        };
+
+        window.savePresetListCloud = async function(list) {
+            if (window.isFirebaseActive && window.db) {
+                for (let i = 0; i < list.length; i++) {
+                    const docRef = doc(window.db, 'artifacts', window.appId, 'public', 'data', 'presets', 'preset_' + i);
+                    await setDoc(docRef, list[i]);
+                }
+            }
+        };
+
+        // Start initialization on load
+        window.addEventListener('load', () => {
+            window.initFirebaseConnection();
+        });
+    </script>
+
+    <!-- Application Logic Script -->
+    <script>
+        // Local Storage Keys for offline fallback
+        const STORAGE_KEY_PATUNGAN = 'kopikas_patungan_v3';
+        const STORAGE_KEY_PENGELUARAN = 'kopikas_pengeluaran_v3';
+        const STORAGE_KEY_PRESET_BAHAN = 'kopikas_preset_v3';
+
+        const MONTH_NAMES = [
+            "Januari", "Februari", "Maret", "April", "Mei", "Juni", 
+            "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+        ];
+
+        // State Data
+        window.patunganList = [];
+        window.pengeluaranList = [];
+        window.presetBahanList = [];
+
+        let trendChartInstance = null;
+        let pieChartInstance = null;
+
+        window.onload = function() {
+            populateBahanDropdownOptions();
+            addExpenseItemRow(); // Add first default empty item row
+            applyFilters();
+            initCharts();
+            document.getElementById('pengeluaranTanggal').valueAsDate = new Date();
+        };
+
+        function loadDataFromLocalStorage() {
+            const storedPatungan = localStorage.getItem(STORAGE_KEY_PATUNGAN);
+            const storedPengeluaran = localStorage.getItem(STORAGE_KEY_PENGELUARAN);
+            const storedPreset = localStorage.getItem(STORAGE_KEY_PRESET_BAHAN);
+
+            if (storedPreset) {
+                window.presetBahanList = JSON.parse(storedPreset);
+            } else {
+                window.presetBahanList = [
+                    { name: 'Kopi', defaultSatuan: 'Kg' },
+                    { name: 'Susu', defaultSatuan: 'Pack' },
+                    { name: 'UHT', defaultSatuan: 'Liter' },
+                    { name: 'Gula Aren', defaultSatuan: 'Liter' },
+                    { name: 'Cup / Gelas', defaultSatuan: 'Pcs' },
+                    { name: 'Syrup Vanilla', defaultSatuan: 'Botol' }
+                ];
+                savePresetToLocalStorage();
+            }
+
+            if (storedPatungan) {
+                window.patunganList = JSON.parse(storedPatungan);
+            } else {
+                window.patunganList = getSamplePatunganData();
+                savePatunganToLocalStorage();
+            }
+
+            if (storedPengeluaran) {
+                window.pengeluaranList = JSON.parse(storedPengeluaran);
+            } else {
+                window.pengeluaranList = getSamplePengeluaranData();
+                savePengeluaranToLocalStorage();
+            }
+
+            populateBahanDropdownOptions();
+            applyFilters();
+        }
+
+        function getSamplePatunganData() {
+            const members = ["Budi Barista", "Andi Syahputra", "Siti Nurhaliza", "Dedi Kurnia", "Rina Permata"];
+            const list = [];
+            let idCount = 1;
+
+            for (let month = 1; month <= 3; month++) {
+                members.forEach((m, idx) => {
+                    let status = 'Lunas';
+                    if (month === 3 && (idx === 3 || idx === 4)) status = 'Belum Lunas';
+                    list.push({
+                        id: 'PAT-' + (idCount++),
+                        nama: m,
+                        bulan: month,
+                        tahun: 2026,
+                        jumlah: 200000,
+                        status: status
+                    });
+                });
+            }
+            return list;
+        }
+
+        function getSamplePengeluaranData() {
+            return [
+                {
+                    id: 'EXP-101',
+                    tanggal: '2026-01-05',
+                    pembeli: 'Andi Barista',
+                    keterangan: 'Toko Sangrai Kopi Utama',
+                    grandTotal: 746000,
+                    items: [
+                        { bahan: 'Kopi', qty: 3, satuan: 'Kg', hargaSatuan: 120000, subtotal: 360000 },
+                        { bahan: 'Susu', qty: 12, satuan: 'Pack', hargaSatuan: 18000, subtotal: 216000 },
+                        { bahan: 'UHT', qty: 10, satuan: 'Liter', hargaSatuan: 17000, subtotal: 170000 }
+                    ]
+                },
+                {
+                    id: 'EXP-102',
+                    tanggal: '2026-02-10',
+                    pembeli: 'Budi',
+                    keterangan: 'Grosir Packaging Kopi',
+                    grandTotal: 525000,
+                    items: [
+                        { bahan: 'Gula Aren', qty: 5, satuan: 'Liter', hargaSatuan: 25000, subtotal: 125000 },
+                        { bahan: 'Cup / Gelas', qty: 200, satuan: 'Pcs', hargaSatuan: 1000, subtotal: 200000 },
+                        { bahan: 'Kopi', qty: 2, satuan: 'Kg', hargaSatuan: 100000, subtotal: 200000 }
+                    ]
+                },
+                {
+                    id: 'EXP-103',
+                    tanggal: '2026-03-02',
+                    pembeli: 'Siti',
+                    keterangan: 'Stok Bahan Awal Bulan Maret',
+                    grandTotal: 1085000,
+                    items: [
+                        { bahan: 'Kopi', qty: 5, satuan: 'Kg', hargaSatuan: 125000, subtotal: 625000 },
+                        { bahan: 'Susu', qty: 15, satuan: 'Pack', hargaSatuan: 18000, subtotal: 270000 },
+                        { bahan: 'Syrup Vanilla', qty: 2, satuan: 'Botol', hargaSatuan: 95000, subtotal: 190000 }
+                    ]
+                }
+            ];
+        }
+
+        function populateBahanDropdownOptions() {
+            const selectFilter = document.getElementById('filterBahan');
+            const currentFilterVal = selectFilter.value;
+
+            selectFilter.innerHTML = '<option value="ALL">Semua Bahan</option>';
+
+            window.presetBahanList.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.name;
+                opt.innerText = item.name;
+                selectFilter.appendChild(opt);
+            });
+
+            selectFilter.value = currentFilterVal;
+            renderMasterBahanList();
+        }
+
+        function createBahanSelectHTML(selectedVal = '') {
+            let html = `<select onchange="handleRowBahanChange(this)" required class="row-bahan-select w-full text-xs sm:text-sm p-2 bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-amberbrand-500 focus:outline-none">`;
+            
+            window.presetBahanList.forEach(item => {
+                const isSelected = item.name === selectedVal ? 'selected' : '';
+                html += `<option value="${escapeHtml(item.name)}" ${isSelected}>${escapeHtml(item.name)} (${escapeHtml(item.defaultSatuan)})</option>`;
+            });
+
+            const isCustom = selectedVal && !window.presetBahanList.some(b => b.name === selectedVal);
+            html += `<option value="CUSTOM_NEW" ${isCustom ? 'selected' : ''}>+ Tambah Bahan Baru (Kustom)</option>`;
+            html += `</select>`;
+
+            html += `<input type="text" placeholder="Nama bahan baru..." value="${isCustom ? escapeHtml(selectedVal) : ''}" class="row-bahan-custom text-xs sm:text-sm p-2 mt-1 w-full bg-white border border-stone-300 rounded-xl focus:ring-2 focus:ring-amberbrand-500 ${isCustom ? '' : 'hidden'}">`;
+
+            return html;
+        }
+
+        function addExpenseItemRow(itemData = null) {
+            const container = document.getElementById('expenseItemsContainer');
+            const rowId = 'row-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+
+            const row = document.createElement('div');
+            row.id = rowId;
+            row.className = 'expense-item-row p-3 bg-white border border-stone-200 rounded-xl shadow-sm space-y-2 relative group hover:border-amberbrand-300 transition';
+
+            const defaultBahan = itemData ? itemData.bahan : (window.presetBahanList[0] ? window.presetBahanList[0].name : '');
+            const defaultQty = itemData ? itemData.qty : '';
+            const defaultSatuan = itemData ? itemData.satuan : (window.presetBahanList[0] ? window.presetBahanList[0].defaultSatuan : 'Kg');
+            const defaultHarga = itemData ? itemData.hargaSatuan : '';
+            const defaultSubtotal = itemData ? itemData.subtotal : 0;
+
+            row.innerHTML = `
+                <div class="grid grid-cols-12 gap-2 items-start">
+                    <div class="col-span-12 sm:col-span-5">
+                        <label class="block text-[11px] font-semibold text-stone-500 mb-0.5">Jenis Bahan</label>
+                        ${createBahanSelectHTML(defaultBahan)}
+                    </div>
+                    <div class="col-span-6 sm:col-span-3">
+                        <label class="block text-[11px] font-semibold text-stone-500 mb-0.5">QTY & Satuan</label>
+                        <div class="flex gap-1">
+                            <input type="number" min="0.1" step="any" required placeholder="1" value="${defaultQty}" oninput="calculateRowSubtotal('${rowId}')" class="row-qty w-full text-xs sm:text-sm p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amberbrand-500">
+                            <select class="row-satuan text-xs p-1.5 bg-stone-50 border border-stone-300 rounded-xl">
+                                <option value="Kg" ${defaultSatuan === 'Kg' ? 'selected' : ''}>Kg</option>
+                                <option value="Liter" ${defaultSatuan === 'Liter' ? 'selected' : ''}>Liter</option>
+                                <option value="Pack" ${defaultSatuan === 'Pack' ? 'selected' : ''}>Pack</option>
+                                <option value="Botol" ${defaultSatuan === 'Botol' ? 'selected' : ''}>Botol</option>
+                                <option value="Pcs" ${defaultSatuan === 'Pcs' ? 'selected' : ''}>Pcs</option>
+                                <option value="Box" ${defaultSatuan === 'Box' ? 'selected' : ''}>Box</option>
+                                <option value="Dus" ${defaultSatuan === 'Dus' ? 'selected' : ''}>Dus</option>
+                                <option value="Gram" ${defaultSatuan === 'Gram' ? 'selected' : ''}>Gram</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-span-6 sm:col-span-4 flex items-center gap-1">
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-semibold text-stone-500 mb-0.5">Harga Satuan (Rp)</label>
+                            <input type="number" min="0" step="500" required placeholder="50000" value="${defaultHarga}" oninput="calculateRowSubtotal('${rowId}')" class="row-harga w-full text-xs sm:text-sm p-2 bg-stone-50 border border-stone-300 rounded-xl focus:ring-2 focus:ring-amberbrand-500">
+                        </div>
+                        <button type="button" onclick="removeExpenseItemRow('${rowId}')" class="mt-4 p-2 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus Item Ini">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-stone-500 pt-1 border-t border-stone-100">
+                    <span>Subtotal Item:</span>
+                    <span class="row-subtotal-display font-bold text-amberbrand-600">${formatRupiah(defaultSubtotal)}</span>
+                </div>
+            `;
+
+            container.appendChild(row);
+            calculateGrandTotal();
+        }
+
+        function removeExpenseItemRow(rowId) {
+            const container = document.getElementById('expenseItemsContainer');
+            if (container.children.length <= 1) {
+                showToast('Minimal harus ada 1 item dalam transaksi belanja!', 'warning');
+                return;
+            }
+            const row = document.getElementById(rowId);
+            if (row) row.remove();
+            calculateGrandTotal();
+        }
+
+        function handleRowBahanChange(selectElem) {
+            const row = selectElem.closest('.expense-item-row');
+            const customInput = row.querySelector('.row-bahan-custom');
+            const satuanSelect = row.querySelector('.row-satuan');
+
+            if (selectElem.value === 'CUSTOM_NEW') {
+                customInput.classList.remove('hidden');
+                customInput.required = true;
+            } else {
+                customInput.classList.add('hidden');
+                customInput.required = false;
+
+                const presetObj = window.presetBahanList.find(b => b.name === selectElem.value);
+                if (presetObj && presetObj.defaultSatuan) {
+                    satuanSelect.value = presetObj.defaultSatuan;
+                }
+            }
+        }
+
+        function calculateRowSubtotal(rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+
+            const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+            const harga = parseFloat(row.querySelector('.row-harga').value) || 0;
+            const subtotal = qty * harga;
+
+            row.querySelector('.row-subtotal-display').innerText = formatRupiah(subtotal);
+            calculateGrandTotal();
+        }
+
+        function calculateGrandTotal() {
+            const rows = document.querySelectorAll('.expense-item-row');
+            let grandTotal = 0;
+
+            rows.forEach(row => {
+                const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+                const harga = parseFloat(row.querySelector('.row-harga').value) || 0;
+                grandTotal += (qty * harga);
+            });
+
+            document.getElementById('pengeluaranGrandTotalDisplay').innerText = formatRupiah(grandTotal);
+            document.getElementById('expenseItemCountText').innerText = `${rows.length} Baris item terinput`;
+        }
+
+        window.applyFilters = function() {
+            const selectedMonth = document.getElementById('filterMonth').value;
+            const selectedYear = parseInt(document.getElementById('filterYear').value);
+            const selectedBahan = document.getElementById('filterBahan').value;
+
+            const periodText = selectedMonth === 'ALL'
+                ? `Semua Bulan Tahun ${selectedYear}`
+                : `${MONTH_NAMES[parseInt(selectedMonth) - 1]} ${selectedYear}`;
+            document.getElementById('currentPeriodDisplay').innerText = periodText;
+
+            // Filter Patungan
+            const filteredPatungan = window.patunganList.filter(item => {
+                const yearMatch = item.tahun === selectedYear;
+                const monthMatch = selectedMonth === 'ALL' || item.bulan === parseInt(selectedMonth);
+                return yearMatch && monthMatch;
+            });
+
+            // Filter Pengeluaran
+            const filteredPengeluaran = window.pengeluaranList.filter(nota => {
+                const date = new Date(nota.tanggal);
+                const yearMatch = date.getFullYear() === selectedYear;
+                const monthMatch = selectedMonth === 'ALL' || (date.getMonth() + 1) === parseInt(selectedMonth);
+                
+                let bahanMatch = true;
+                if (selectedBahan !== 'ALL') {
+                    bahanMatch = nota.items && nota.items.some(it => it.bahan.toLowerCase() === selectedBahan.toLowerCase());
+                }
+
+                return yearMatch && monthMatch && bahanMatch;
+            });
+
+            updateKPIs(filteredPatungan, filteredPengeluaran);
+            renderIngredientSummaryCards(filteredPengeluaran);
+            renderPengeluaranTable(filteredPengeluaran);
+            renderPatunganTable(filteredPatungan);
+            updateCharts(selectedYear);
+        };
+
+        function updateKPIs(filteredPatungan, filteredPengeluaran) {
+            const totalPatungan = filteredPatungan
+                .filter(p => p.status === 'Lunas')
+                .reduce((sum, p) => sum + Number(p.jumlah), 0);
+
+            const lunasCount = filteredPatungan.filter(p => p.status === 'Lunas').length;
+
+            const totalPengeluaran = filteredPengeluaran
+                .reduce((sum, n) => sum + Number(n.grandTotal), 0);
+
+            const sisaSaldo = totalPatungan - totalPengeluaran;
+
+            let totalVolumeItems = 0;
+            const bahanQtyMap = {};
+
+            filteredPengeluaran.forEach(nota => {
+                if (nota.items) {
+                    nota.items.forEach(it => {
+                        totalVolumeItems += Number(it.qty);
+                        bahanQtyMap[it.bahan] = (bahanQtyMap[it.bahan] || 0) + Number(it.qty);
+                    });
+                }
+            });
+
+            let topBahan = '-';
+            let maxQty = 0;
+            for (const [bahan, qty] of Object.entries(bahanQtyMap)) {
+                if (qty > maxQty) {
+                    maxQty = qty;
+                    topBahan = `${bahan} (${qty})`;
+                }
+            }
+
+            document.getElementById('kpiTotalPatungan').innerText = formatRupiah(totalPatungan);
+            document.getElementById('kpiLunasCount').innerText = lunasCount;
+
+            document.getElementById('kpiTotalPengeluaran').innerText = formatRupiah(totalPengeluaran);
+            document.getElementById('kpiNotaCount').innerText = filteredPengeluaran.length;
+
+            document.getElementById('kpiSisaSaldo').innerText = formatRupiah(sisaSaldo);
+
+            const kpiStatusSaldo = document.getElementById('kpiStatusSaldo');
+            if (sisaSaldo < 0) {
+                kpiStatusSaldo.innerText = '⚠️ Defisit Kas!';
+                kpiStatusSaldo.className = 'text-xs text-rose-600 font-bold';
+            } else {
+                kpiStatusSaldo.innerText = '✓ Status Saldo Aman';
+                kpiStatusSaldo.className = 'text-xs text-emerald-600 font-semibold';
+            }
+
+            document.getElementById('kpiTotalQTYVolume').innerText = `${totalVolumeItems.toLocaleString('id-ID')} Total QTY`;
+            document.getElementById('kpiTopBahan').innerText = `Terbanyak: ${topBahan}`;
+        }
+
+        function renderIngredientSummaryCards(pengeluaranData) {
+            const grid = document.getElementById('ingredientSummaryGrid');
+            grid.innerHTML = '';
+
+            const summaryMap = {};
+
+            window.presetBahanList.forEach(p => {
+                summaryMap[p.name] = { qty: 0, total: 0, satuan: p.defaultSatuan };
+            });
+
+            pengeluaranData.forEach(nota => {
+                if (nota.items) {
+                    nota.items.forEach(it => {
+                        const bName = it.bahan;
+                        if (!summaryMap[bName]) {
+                            summaryMap[bName] = { qty: 0, total: 0, satuan: it.satuan || 'Unit' };
+                        }
+                        summaryMap[bName].qty += Number(it.qty);
+                        summaryMap[bName].total += Number(it.subtotal);
+                    });
+                }
+            });
+
+            for (const [bahan, data] of Object.entries(summaryMap)) {
+                const card = document.createElement('div');
+                card.className = 'bg-stone-50 p-3.5 rounded-xl border border-stone-200/90 flex flex-col justify-between hover:border-amberbrand-400 transition';
+
+                let iconClass = 'fa-cubes';
+                if (bahan.toLowerCase().includes('kopi')) iconClass = 'fa-seedling text-amber-800';
+                else if (bahan.toLowerCase().includes('susu')) iconClass = 'fa-cow text-sky-600';
+                else if (bahan.toLowerCase().includes('uht')) iconClass = 'fa-box-open text-indigo-600';
+                else if (bahan.toLowerCase().includes('gula')) iconClass = 'fa-jar text-amber-600';
+                else if (bahan.toLowerCase().includes('cup')) iconClass = 'fa-wine-glass text-emerald-600';
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-stone-800 text-xs sm:text-sm flex items-center gap-1.5">
+                            <i class="fa-solid ${iconClass}"></i> ${escapeHtml(bahan)}
+                        </span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-200/80 text-stone-700">${escapeHtml(data.satuan)}</span>
+                    </div>
+                    <div class="space-y-0.5">
+                        <div class="text-lg font-black text-espresso-900">${data.qty.toLocaleString('id-ID')} <span class="text-xs font-normal text-stone-500">${data.satuan}</span></div>
+                        <div class="text-xs font-bold text-amberbrand-600">${formatRupiah(data.total)}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+        }
+
+        function renderPengeluaranTable(data) {
+            const tbody = document.getElementById('tablePengeluaranBody');
+            document.getElementById('pengeluaranTableCount').innerText = `${data.length} Nota Transaksi`;
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-stone-400 italic">Belum ada transaksi belanja untuk periode ini.</td></tr>`;
+                return;
+            }
+
+            data.forEach(nota => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-stone-50 transition';
+
+                let itemsListHTML = '<div class="space-y-1 my-1">';
+                if (nota.items) {
+                    nota.items.forEach(it => {
+                        itemsListHTML += `
+                            <div class="flex items-center justify-between text-xs bg-stone-100/90 px-2.5 py-1 rounded-lg border border-stone-200">
+                                <span class="font-semibold text-stone-800">${escapeHtml(it.bahan)}</span>
+                                <span class="text-stone-500">${it.qty} ${escapeHtml(it.satuan)} &bull; <strong class="text-stone-700">${formatRupiah(it.subtotal)}</strong></span>
+                            </div>
+                        `;
+                    });
+                }
+                itemsListHTML += '</div>';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-stone-600 whitespace-nowrap">
+                        <div class="font-bold text-stone-800">${formatDate(nota.tanggal)}</div>
+                        <div class="text-[11px] text-stone-400"><i class="fa-solid fa-user text-[10px] mr-1"></i>${escapeHtml(nota.pembeli || 'PIC Non-Nama')}</div>
+                        ${nota.keterangan ? `<div class="text-[11px] italic text-amber-800 mt-0.5">${escapeHtml(nota.keterangan)}</div>` : ''}
+                    </td>
+                    <td class="py-3 px-4 min-w-[200px]">
+                        ${itemsListHTML}
+                    </td>
+                    <td class="py-3 px-4 font-extrabold text-amberbrand-600 whitespace-nowrap">
+                        ${formatRupiah(nota.grandTotal)}
+                        <div class="text-[10px] font-normal text-stone-400">${nota.items ? nota.items.length : 0} jenis item</div>
+                    </td>
+                    <td class="py-3 px-4 text-center whitespace-nowrap space-x-1">
+                        <button onclick="editPengeluaran('${nota.id}')" class="p-1.5 text-stone-500 hover:text-indigo-600 rounded-lg hover:bg-stone-100" title="Edit Nota">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deletePengeluaran('${nota.id}')" class="p-1.5 text-stone-500 hover:text-rose-600 rounded-lg hover:bg-stone-100" title="Hapus Nota">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderPatunganTable(data) {
+            const tbody = document.getElementById('tablePatunganBody');
+            document.getElementById('patunganTableCount').innerText = `${data.length} Data`;
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-stone-400 italic">Belum ada data patungan anggota untuk periode ini.</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-stone-50 transition';
+
+                const isLunas = item.status === 'Lunas';
+                const statusBadge = isLunas
+                    ? `<button onclick="togglePatunganStatus('${item.id}')" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition"><i class="fa-solid fa-check text-[10px] mr-1"></i>Lunas</button>`
+                    : `<button onclick="togglePatunganStatus('${item.id}')" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200 transition"><i class="fa-solid fa-clock text-[10px] mr-1"></i>Belum Lunas</button>`;
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-semibold text-stone-800">${escapeHtml(item.nama)}</td>
+                    <td class="py-3 px-4 text-stone-600">${MONTH_NAMES[item.bulan - 1]} ${item.tahun}</td>
+                    <td class="py-3 px-4 font-medium text-stone-700">${formatRupiah(item.jumlah)}</td>
+                    <td class="py-3 px-4">${statusBadge}</td>
+                    <td class="py-3 px-4 text-center space-x-1">
+                        <button onclick="editPatungan('${item.id}')" class="p-1.5 text-stone-500 hover:text-indigo-600 rounded-lg hover:bg-stone-100" title="Edit">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deletePatungan('${item.id}')" class="p-1.5 text-stone-500 hover:text-rose-600 rounded-lg hover:bg-stone-100" title="Hapus">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderMasterBahanList() {
+            const container = document.getElementById('masterBahanListContainer');
+            container.innerHTML = '';
+
+            window.presetBahanList.forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = 'p-3 bg-white border border-stone-200 rounded-xl flex items-center justify-between shadow-sm';
+                card.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-espresso-100 text-espresso-800 flex items-center justify-center font-bold text-xs">
+                            <i class="fa-solid fa-mug-saucer"></i>
+                        </div>
+                        <div>
+                            <h5 class="font-bold text-stone-800 text-xs sm:text-sm">${escapeHtml(item.name)}</h5>
+                            <span class="text-[11px] text-stone-400">Satuan: ${escapeHtml(item.defaultSatuan)}</span>
+                        </div>
+                    </div>
+                    <button onclick="deleteMasterBahan(${idx})" class="text-stone-400 hover:text-rose-600 p-1.5 rounded-lg transition" title="Hapus Preset">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function initCharts() {
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            trendChartInstance = new Chart(ctxTrend, {
+                type: 'bar',
+                data: {
+                    labels: MONTH_NAMES,
+                    datasets: [
+                        {
+                            label: 'Kas Patungan',
+                            data: new Array(12).fill(0),
+                            backgroundColor: 'rgba(34, 197, 94, 0.75)',
+                            borderRadius: 6,
+                        },
+                        {
+                            label: 'Belanja Bahan',
+                            data: new Array(12).fill(0),
+                            backgroundColor: 'rgba(217, 119, 6, 0.8)',
+                            borderRadius: 6,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { font: { family: 'Inter', size: 12 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.dataset.label}: ${formatRupiah(ctx.raw)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: (v) => 'Rp ' + (v / 1000) + 'k' }
+                        }
+                    }
+                }
+            });
+
+            const ctxPie = document.getElementById('ingredientPieChart').getContext('2d');
+            pieChartInstance = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#78522f', '#38bdf8', '#818cf8', '#f59e0b', '#10b981', '#64748b', '#ec4899'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` ${ctx.label}: ${formatRupiah(ctx.raw)}`
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        function updateCharts(year) {
+            if (!trendChartInstance || !pieChartInstance) return;
+
+            const monthlyPatungan = new Array(12).fill(0);
+            const monthlyPengeluaran = new Array(12).fill(0);
+            const bahanMap = {};
+
+            window.patunganList.forEach(p => {
+                if (p.tahun === year && p.status === 'Lunas') {
+                    const idx = p.bulan - 1;
+                    if (idx >= 0 && idx < 12) monthlyPatungan[idx] += Number(p.jumlah);
+                }
+            });
+
+            window.pengeluaranList.forEach(nota => {
+                const date = new Date(nota.tanggal);
+                if (date.getFullYear() === year) {
+                    const idx = date.getMonth();
+                    if (idx >= 0 && idx < 12) monthlyPengeluaran[idx] += Number(nota.grandTotal);
+
+                    if (nota.items) {
+                        nota.items.forEach(it => {
+                            bahanMap[it.bahan] = (bahanMap[it.bahan] || 0) + Number(it.subtotal);
+                        });
+                    }
+                }
+            });
+
+            trendChartInstance.data.datasets[0].data = monthlyPatungan;
+            trendChartInstance.data.datasets[1].data = monthlyPengeluaran;
+            trendChartInstance.update();
+
+            pieChartInstance.data.labels = Object.keys(bahanMap);
+            pieChartInstance.data.datasets[0].data = Object.values(bahanMap);
+            pieChartInstance.update();
+        }
+
+        async function handleSavePengeluaran(event) {
+            event.preventDefault();
+
+            const id = document.getElementById('pengeluaranId').value;
+            const tanggal = document.getElementById('pengeluaranTanggal').value;
+            const pembeli = document.getElementById('pengeluaranPembeli').value.trim();
+            const keterangan = document.getElementById('pengeluaranKeterangan').value.trim();
+
+            const itemRows = document.querySelectorAll('.expense-item-row');
+            const items = [];
+            let grandTotal = 0;
+
+            itemRows.forEach(row => {
+                const selectVal = row.querySelector('.row-bahan-select').value;
+                const customVal = row.querySelector('.row-bahan-custom').value.trim();
+                const bahan = selectVal === 'CUSTOM_NEW' ? customVal : selectVal;
+
+                const qty = parseFloat(row.querySelector('.row-qty').value) || 0;
+                const satuan = row.querySelector('.row-satuan').value;
+                const hargaSatuan = parseFloat(row.querySelector('.row-harga').value) || 0;
+                const subtotal = qty * hargaSatuan;
+
+                if (bahan && qty > 0) {
+                    items.push({ bahan, qty, satuan, hargaSatuan, subtotal });
+                    grandTotal += subtotal;
+
+                    if (selectVal === 'CUSTOM_NEW' && customVal) {
+                        if (!window.presetBahanList.some(b => b.name.toLowerCase() === customVal.toLowerCase())) {
+                            window.presetBahanList.push({ name: customVal, defaultSatuan: satuan });
+                            savePresetToLocalStorage();
+                            if (window.savePresetListCloud) window.savePresetListCloud(window.presetBahanList);
+                            populateBahanDropdownOptions();
+                        }
+                    }
+                }
+            });
+
+            if (items.length === 0) {
+                showToast('Isikan minimal 1 item belanja yang valid!', 'error');
+                return;
+            }
+
+            const notaPayload = {
+                id: id || ('EXP-' + Date.now()),
+                tanggal,
+                pembeli,
+                keterangan,
+                grandTotal,
+                items
+            };
+
+            if (window.isFirebaseActive && window.savePengeluaranItemCloud) {
+                await window.savePengeluaranItemCloud(notaPayload);
+                showToast('Transaksi disinkronkan ke Cloud!', 'success');
+            } else {
+                if (id) {
+                    const idx = window.pengeluaranList.findIndex(e => e.id === id);
+                    if (idx !== -1) window.pengeluaranList[idx] = notaPayload;
+                } else {
+                    window.pengeluaranList.push(notaPayload);
+                }
+                savePengeluaranToLocalStorage();
+                applyFilters();
+                showToast('Nota belanja berhasil disimpan!', 'success');
+            }
+
+            resetFormPengeluaran();
+        }
+
+        async function handleSavePatungan(event) {
+            event.preventDefault();
+            const id = document.getElementById('patunganId').value;
+            const nama = document.getElementById('patunganNama').value.trim();
+            const bulan = parseInt(document.getElementById('patunganBulan').value);
+            const tahun = parseInt(document.getElementById('patunganTahun').value);
+            const jumlah = parseFloat(document.getElementById('patunganJumlah').value);
+            const status = document.getElementById('patunganStatus').value;
+
+            const patunganPayload = {
+                id: id || ('PAT-' + Date.now()),
+                nama,
+                bulan,
+                tahun,
+                jumlah,
+                status
+            };
+
+            if (window.isFirebaseActive && window.savePatunganItemCloud) {
+                await window.savePatunganItemCloud(patunganPayload);
+                showToast('Data patungan tersimpan ke Cloud!', 'success');
+            } else {
+                if (id) {
+                    const idx = window.patunganList.findIndex(p => p.id === id);
+                    if (idx !== -1) window.patunganList[idx] = patunganPayload;
+                } else {
+                    window.patunganList.push(patunganPayload);
+                }
+                savePatunganToLocalStorage();
+                applyFilters();
+                showToast('Patungan anggota disimpan!', 'success');
+            }
+
+            resetFormPatungan();
+        }
+
+        async function togglePatunganStatus(id) {
+            const item = window.patunganList.find(p => p.id === id);
+            if (!item) return;
+
+            item.status = item.status === 'Lunas' ? 'Belum Lunas' : 'Lunas';
+
+            if (window.isFirebaseActive && window.savePatunganItemCloud) {
+                await window.savePatunganItemCloud(item);
+                showToast(`Status ${item.nama} diperbarui!`, 'success');
+            } else {
+                savePatunganToLocalStorage();
+                applyFilters();
+                showToast(`Status ${item.nama} diperbarui!`, 'info');
+            }
+        }
+
+        async function handleAddMasterBahan(event) {
+            event.preventDefault();
+            const nama = document.getElementById('masterBahanNama').value.trim();
+            const satuan = document.getElementById('masterBahanSatuan').value;
+
+            if (!nama) return;
+
+            if (window.presetBahanList.some(b => b.name.toLowerCase() === nama.toLowerCase())) {
+                showToast('Preset bahan ini sudah ada!', 'warning');
+                return;
+            }
+
+            window.presetBahanList.push({ name: nama, defaultSatuan: satuan });
+            savePresetToLocalStorage();
+
+            if (window.isFirebaseActive && window.savePresetListCloud) {
+                await window.savePresetListCloud(window.presetBahanList);
+            }
+
+            populateBahanDropdownOptions();
+            document.getElementById('formMasterBahan').reset();
+            showToast('Preset bahan baru ditambahkan', 'success');
+            applyFilters();
+        }
+
+        async function deleteMasterBahan(idx) {
+            if (confirm(`Hapus preset "${window.presetBahanList[idx].name}"?`)) {
+                window.presetBahanList.splice(idx, 1);
+                savePresetToLocalStorage();
+                if (window.isFirebaseActive && window.savePresetListCloud) {
+                    await window.savePresetListCloud(window.presetBahanList);
+                }
+                populateBahanDropdownOptions();
+                applyFilters();
+                showToast('Preset bahan dihapus', 'info');
+            }
+        }
+
+        function editPengeluaran(id) {
+            const nota = window.pengeluaranList.find(e => e.id === id);
+            if (!nota) return;
+
+            document.getElementById('pengeluaranId').value = nota.id;
+            document.getElementById('pengeluaranTanggal').value = nota.tanggal;
+            document.getElementById('pengeluaranPembeli').value = nota.pembeli || '';
+            document.getElementById('pengeluaranKeterangan').value = nota.keterangan || '';
+
+            const container = document.getElementById('expenseItemsContainer');
+            container.innerHTML = '';
+
+            if (nota.items) {
+                nota.items.forEach(it => {
+                    addExpenseItemRow(it);
+                });
+            }
+
+            switchTab('pengeluaran');
+        }
+
+        async function deletePengeluaran(id) {
+            if (confirm('Hapus nota transaksi belanja ini beserta seluruh itemnya?')) {
+                if (window.isFirebaseActive && window.deletePengeluaranItemCloud) {
+                    await window.deletePengeluaranItemCloud(id);
+                    showToast('Nota transaksi dihapus dari Cloud', 'info');
+                } else {
+                    window.pengeluaranList = window.pengeluaranList.filter(e => e.id !== id);
+                    savePengeluaranToLocalStorage();
+                    applyFilters();
+                    showToast('Nota transaksi dihapus', 'info');
+                }
+            }
+        }
+
+        function editPatungan(id) {
+            const item = window.patunganList.find(p => p.id === id);
+            if (!item) return;
+
+            document.getElementById('patunganId').value = item.id;
+            document.getElementById('patunganNama').value = item.nama;
+            document.getElementById('patunganBulan').value = item.bulan;
+            document.getElementById('patunganTahun').value = item.tahun;
+            document.getElementById('patunganJumlah').value = item.jumlah;
+            document.getElementById('patunganStatus').value = item.status;
+
+            switchTab('patungan');
+        }
+
+        async function deletePatungan(id) {
+            if (confirm('Hapus rekap patungan anggota ini?')) {
+                if (window.isFirebaseActive && window.deletePatunganItemCloud) {
+                    await window.deletePatunganItemCloud(id);
+                    showToast('Data patungan dihapus dari Cloud', 'info');
+                } else {
+                    window.patunganList = window.patunganList.filter(p => p.id !== id);
+                    savePatunganToLocalStorage();
+                    applyFilters();
+                    showToast('Data patungan dihapus', 'info');
+                }
+            }
+        }
+
+        function savePatunganToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY_PATUNGAN, JSON.stringify(window.patunganList));
+        }
+
+        function savePengeluaranToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY_PENGELUARAN, JSON.stringify(window.pengeluaranList));
+        }
+
+        function savePresetToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY_PRESET_BAHAN, JSON.stringify(window.presetBahanList));
+        }
+
+        function resetFormPengeluaran() {
+            document.getElementById('formPengeluaran').reset();
+            document.getElementById('pengeluaranId').value = '';
+            document.getElementById('pengeluaranTanggal').valueAsDate = new Date();
+            document.getElementById('expenseItemsContainer').innerHTML = '';
+            addExpenseItemRow();
+        }
+
+        function resetFormPatungan() {
+            document.getElementById('formPatungan').reset();
+            document.getElementById('patunganId').value = '';
+            document.getElementById('patunganTahun').value = '2026';
+        }
+
+        function switchTab(tab) {
+            const btnPengeluaran = document.getElementById('tabBtnPengeluaran');
+            const btnPatungan = document.getElementById('tabBtnPatungan');
+            const btnMaster = document.getElementById('tabBtnMasterBahan');
+
+            const contentPengeluaran = document.getElementById('tabContentPengeluaran');
+            const contentPatungan = document.getElementById('tabContentPatungan');
+            const contentMaster = document.getElementById('tabContentMasterBahan');
+
+            [btnPengeluaran, btnPatungan, btnMaster].forEach(b => {
+                b.className = 'px-4 py-2.5 text-sm font-semibold rounded-t-xl transition border-b-2 border-transparent text-stone-500 hover:text-stone-800 hover:bg-stone-100 flex items-center gap-2';
+            });
+
+            [contentPengeluaran, contentPatungan, contentMaster].forEach(c => c.classList.add('hidden'));
+
+            if (tab === 'pengeluaran') {
+                btnPengeluaran.className = 'px-4 py-2.5 text-sm font-semibold rounded-t-xl transition border-b-2 border-amberbrand-600 text-amberbrand-600 bg-white shadow-sm flex items-center gap-2';
+                contentPengeluaran.classList.remove('hidden');
+            } else if (tab === 'patungan') {
+                btnPatungan.className = 'px-4 py-2.5 text-sm font-semibold rounded-t-xl transition border-b-2 border-emerald-600 text-emerald-600 bg-white shadow-sm flex items-center gap-2';
+                contentPatungan.classList.remove('hidden');
+            } else if (tab === 'masterBahan') {
+                btnMaster.className = 'px-4 py-2.5 text-sm font-semibold rounded-t-xl transition border-b-2 border-espresso-700 text-espresso-700 bg-white shadow-sm flex items-center gap-2';
+                contentMaster.classList.remove('hidden');
+            }
+        }
+
+        // Firebase Settings Modal Handlers
+        function openFirebaseSettingsModal() {
+            const modal = document.getElementById('firebaseModal');
+            const savedCfgStr = localStorage.getItem('kopikas_firebase_config_v3');
+            if (savedCfgStr) {
+                document.getElementById('firebaseConfigInput').value = savedCfgStr;
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeFirebaseSettingsModal() {
+            document.getElementById('firebaseModal').classList.add('hidden');
+        }
+
+        function handleSaveFirebaseConfig(event) {
+            event.preventDefault();
+            const inputVal = document.getElementById('firebaseConfigInput').value.trim();
+
+            try {
+                let parsedObj = null;
+                if (inputVal.includes('{')) {
+                    parsedObj = JSON.parse(inputVal);
+                } else if (inputVal.includes('apiKey')) {
+                    // Try to parse key-value snippet if user pasted snippet
+                    showToast('Harap tempel dalam format JSON valid {}', 'error');
+                    return;
+                }
+
+                if (!parsedObj || !parsedObj.apiKey || !parsedObj.projectId) {
+                    showToast('Format Konfigurasi Firebase tidak valid! Pastikan mengandung apiKey & projectId.', 'error');
+                    return;
+                }
+
+                localStorage.setItem('kopikas_firebase_config_v3', JSON.stringify(parsedObj));
+                closeFirebaseSettingsModal();
+                location.reload(); // Reload to re-initialize Firebase instance
+            } catch(e) {
+                showToast('Gagal memproses JSON. Periksa kembali tanda petik/koma JSON Anda.', 'error');
+            }
+        }
+
+        function disconnectFirebaseConfig() {
+            if (confirm('Putuskan koneksi Firebase dan kembali ke Demo Mode Offline?')) {
+                localStorage.removeItem('kopikas_firebase_config_v3');
+                closeFirebaseSettingsModal();
+                location.reload();
+            }
+        }
+
+        function exportDataJSON() {
+            const exportPayload = {
+                patungan: window.patunganList,
+                pengeluaran: window.pengeluaranList,
+                presets: window.presetBahanList,
+                exportDate: new Date().toISOString()
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportPayload, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `KopiKas_Backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function formatRupiah(num) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
+        }
+
+        function formatDate(str) {
+            if (!str) return '-';
+            return new Date(str).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            let bg = 'bg-stone-800 text-white';
+            if (type === 'success') bg = 'bg-emerald-600 text-white';
+            if (type === 'warning') bg = 'bg-amber-600 text-white';
+            if (type === 'error') bg = 'bg-rose-600 text-white';
+
+            toast.className = `${bg} px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transition duration-300`;
+            toast.innerHTML = `<i class="fa-solid fa-mug-hot"></i> ${msg}`;
+
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3200);
+        }
+    </script>
+</body>
+</html>
