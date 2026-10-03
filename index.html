@@ -346,4 +346,617 @@
 
     <!-- Firebase App & Firestore Scripts (v10 Modular SDK) -->
     <script type="module">
-   
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            onSnapshot, 
+            addDoc, 
+            deleteDoc, 
+            updateDoc, 
+            doc,
+            setDoc 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Firebase Configuration milik zakariainkom-cyber (patunganqu)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCMjM-vFWSzIv3VASrFhV4mv0p9sDtUWWo",
+            authDomain: "patunganqu.firebaseapp.com",
+            projectId: "patunganqu",
+            storageBucket: "patunganqu.firebasestorage.app",
+            messagingSenderId: "1042418652352",
+            appId: "1:1042418652352:web:86f844d01d68e1773f8925",
+            measurementId: "G-HP0NZGVPQE"
+        };
+
+        // App State Global
+        window.appState = {
+            patungan: [],
+            pengeluaran: [],
+            presetBahan: ["Kopi", "Susu", "UHT", "Gula Aren", "Cup / Gelas", "Syrup Vanilla"],
+            db: null,
+            isOnline: false
+        };
+
+        // Initializer
+        try {
+            const app = initializeApp(firebaseConfig);
+            window.appState.db = getFirestore(app);
+            window.appState.isOnline = true;
+            
+            updateStatusBadge(true, "Cloud Connected (Real-time)");
+            initRealtimeListeners();
+        } catch (err) {
+            console.warn("Koneksi Firebase gagal, berpindah ke LocalStorage fallback:", err);
+            updateStatusBadge(false, "Offline Demo Mode");
+            loadLocalFallback();
+        }
+
+        function updateStatusBadge(online, text) {
+            const badge = document.getElementById("syncStatusBadge");
+            if (online) {
+                badge.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-900/80 text-emerald-200 border border-emerald-700";
+                badge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span><span>${text}</span>`;
+            } else {
+                badge.className = "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-900/80 text-amber-200 border border-amber-700";
+                badge.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span><span>${text}</span>`;
+            }
+        }
+
+        function initRealtimeListeners() {
+            const db = window.appState.db;
+
+            // Listen Patungan
+            onSnapshot(collection(db, "patungan"), (snapshot) => {
+                window.appState.patungan = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                window.renderAll();
+            }, (error) => console.error("Err Patungan:", error));
+
+            // Listen Pengeluaran
+            onSnapshot(collection(db, "pengeluaran"), (snapshot) => {
+                window.appState.pengeluaran = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                window.renderAll();
+            }, (error) => console.error("Err Pengeluaran:", error));
+
+            // Listen Preset Bahan
+            onSnapshot(collection(db, "presets"), (snapshot) => {
+                if (!snapshot.empty) {
+                    const presetArr = snapshot.docs.map(doc => doc.data().name);
+                    if(presetArr.length > 0) window.appState.presetBahan = presetArr;
+                }
+                window.renderPresets();
+            }, (error) => console.error("Err Presets:", error));
+        }
+
+        function loadLocalFallback() {
+            window.appState.patungan = JSON.parse(localStorage.getItem('kopikas_patungan')) || [];
+            window.appState.pengeluaran = JSON.parse(localStorage.getItem('kopikas_pengeluaran')) || [];
+            window.appState.presetBahan = JSON.parse(localStorage.getItem('kopikas_presets')) || window.appState.presetBahan;
+            window.renderAll();
+        }
+
+        // Global Operations Exported to Window
+        window.dbSimpanPatungan = async function(data) {
+            if (window.appState.isOnline) {
+                await addDoc(collection(window.appState.db, "patungan"), data);
+            } else {
+                window.appState.patungan.push({ id: Date.now().toString(), ...data });
+                localStorage.setItem('kopikas_patungan', JSON.stringify(window.appState.patungan));
+                window.renderAll();
+            }
+        };
+
+        window.dbTogglePatunganStatus = async function(id, currentStatus) {
+            const newStatus = currentStatus === 'Lunas' ? 'Belum Lunas' : 'Lunas';
+            if (window.appState.isOnline) {
+                await updateDoc(doc(window.appState.db, "patungan", id), { status: newStatus });
+            } else {
+                const item = window.appState.patungan.find(p => p.id === id);
+                if(item) item.status = newStatus;
+                localStorage.setItem('kopikas_patungan', JSON.stringify(window.appState.patungan));
+                window.renderAll();
+            }
+        };
+
+        window.dbHapusPatungan = async function(id) {
+            if (window.appState.isOnline) {
+                await deleteDoc(doc(window.appState.db, "patungan", id));
+            } else {
+                window.appState.patungan = window.appState.patungan.filter(p => p.id !== id);
+                localStorage.setItem('kopikas_patungan', JSON.stringify(window.appState.patungan));
+                window.renderAll();
+            }
+        };
+
+        window.dbSimpanPengeluaran = async function(data) {
+            if (window.appState.isOnline) {
+                await addDoc(collection(window.appState.db, "pengeluaran"), data);
+            } else {
+                window.appState.pengeluaran.push({ id: Date.now().toString(), ...data });
+                localStorage.setItem('kopikas_pengeluaran', JSON.stringify(window.appState.pengeluaran));
+                window.renderAll();
+            }
+        };
+
+        window.dbHapusPengeluaran = async function(id) {
+            if (window.appState.isOnline) {
+                await deleteDoc(doc(window.appState.db, "pengeluaran", id));
+            } else {
+                window.appState.pengeluaran = window.appState.pengeluaran.filter(p => p.id !== id);
+                localStorage.setItem('kopikas_pengeluaran', JSON.stringify(window.appState.pengeluaran));
+                window.renderAll();
+            }
+        };
+
+        window.dbTambahPreset = async function(nama) {
+            if(!window.appState.presetBahan.includes(nama)) {
+                window.appState.presetBahan.push(nama);
+                if (window.appState.isOnline) {
+                    await addDoc(collection(window.appState.db, "presets"), { name: nama });
+                } else {
+                    localStorage.setItem('kopikas_presets', JSON.stringify(window.appState.presetBahan));
+                    window.renderPresets();
+                }
+            }
+        };
+    </script>
+
+    <!-- App UI & Business Logic JavaScript -->
+    <script>
+        let chartTrenInstance = null;
+        let chartPieInstance = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initYearFilter();
+            setDefaultDates();
+            tambahBarisItem(); // 1 row default
+        });
+
+        function setDefaultDates() {
+            const today = new Date();
+            document.getElementById('tglBelanja').value = today.toISOString().split('T')[0];
+            
+            const monthStr = today.toISOString().slice(0,7);
+            document.getElementById('bulanPatungan').value = monthStr;
+        }
+
+        function initYearFilter() {
+            const selectTahun = document.getElementById('filterTahun');
+            const currentYear = new Date().getFullYear();
+            selectTahun.innerHTML = '';
+            for(let y = currentYear - 1; y <= currentYear + 2; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                if(y === currentYear) opt.selected = true;
+                selectTahun.appendChild(opt);
+            }
+        }
+
+        // --- Dynamic Row Item Belanja ---
+        function tambahBarisItem() {
+            const container = document.getElementById('containerItemBelanja');
+            const rowId = 'item_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+
+            let optionsHtml = window.appState.presetBahan.map(b => `<option value="${b}">${b}</option>`).join('');
+            optionsHtml += `<option value="NEW_PRESET">+ Tambah Bahan Baru...</option>`;
+
+            const div = document.createElement('div');
+            div.id = rowId;
+            div.className = "item-belanja-row bg-stone-50 p-3 rounded-xl border border-stone-200 grid grid-cols-12 gap-2 items-center";
+            div.innerHTML = `
+                <div class="col-span-12 sm:col-span-4">
+                    <select onchange="handleSelectBahanChange(this, '${rowId}')" class="bahan-select w-full border border-stone-300 rounded-lg p-1.5 text-xs bg-white focus:ring-1 focus:ring-amber-500">
+                        ${optionsHtml}
+                    </select>
+                    <input type="text" placeholder="Nama bahan baru..." class="bahan-custom-input hidden w-full border border-stone-300 rounded-lg p-1.5 text-xs mt-1 bg-amber-50" />
+                </div>
+                <div class="col-span-4 sm:col-span-2">
+                    <input type="number" step="any" placeholder="Qty" oninput="hitungSubtotalRow('${rowId}')" class="qty-input w-full border border-stone-300 rounded-lg p-1.5 text-xs bg-white text-center" required min="0.01">
+                </div>
+                <div class="col-span-3 sm:col-span-2">
+                    <select class="satuan-select w-full border border-stone-300 rounded-lg p-1.5 text-xs bg-white">
+                        <option value="Pcs">Pcs</option>
+                        <option value="Kg">Kg</option>
+                        <option value="Gram">Gram</option>
+                        <option value="Liter">Liter</option>
+                        <option value="Pack">Pack</option>
+                        <option value="Botol">Botol</option>
+                        <option value="Dus">Dus</option>
+                    </select>
+                </div>
+                <div class="col-span-4 sm:col-span-3">
+                    <input type="number" placeholder="Harga/Satuan" oninput="hitungSubtotalRow('${rowId}')" class="harga-input w-full border border-stone-300 rounded-lg p-1.5 text-xs bg-white" required min="0">
+                </div>
+                <div class="col-span-1 text-center">
+                    <button type="button" onclick="hapusBarisItem('${rowId}')" class="text-rose-500 hover:text-rose-700 p-1">
+                        <i class="fa-solid fa-trash-can text-sm"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(div);
+            updateTotalBelanjaNota();
+        }
+
+        function handleSelectBahanChange(selectEl, rowId) {
+            const row = document.getElementById(rowId);
+            const customInput = row.querySelector('.bahan-custom-input');
+            if (selectEl.value === 'NEW_PRESET') {
+                customInput.classList.remove('hidden');
+                customInput.required = true;
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+                customInput.required = false;
+            }
+        }
+
+        function hapusBarisItem(rowId) {
+            const container = document.getElementById('containerItemBelanja');
+            if(container.children.length > 1) {
+                document.getElementById(rowId).remove();
+                updateTotalBelanjaNota();
+            } else {
+                alert("Minimal harus ada 1 item dalam transaksi!");
+            }
+        }
+
+        function hitungSubtotalRow(rowId) {
+            updateTotalBelanjaNota();
+        }
+
+        function updateTotalBelanjaNota() {
+            let total = 0;
+            document.querySelectorAll('.item-belanja-row').forEach(row => {
+                const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+                const harga = parseFloat(row.querySelector('.harga-input').value) || 0;
+                total += (qty * harga);
+            });
+            document.getElementById('labelTotalBelanjaNota').textContent = formatRupiah(total);
+        }
+
+        // --- Core Handlers ---
+        async function simpanPengeluaran(e) {
+            e.preventDefault();
+            const tanggal = document.getElementById('tglBelanja').value;
+            const ket = document.getElementById('keteranganBelanja').value || 'Belanja Bahan';
+
+            const items = [];
+            let grandTotal = 0;
+
+            const rows = document.querySelectorAll('.item-belanja-row');
+            for(let row of rows) {
+                const selectBahan = row.querySelector('.bahan-select').value;
+                const customBahan = row.querySelector('.bahan-custom-input').value.trim();
+                
+                let namaBahan = selectBahan;
+                if(selectBahan === 'NEW_PRESET') {
+                    if(!customBahan) continue;
+                    namaBahan = customBahan;
+                    await window.dbTambahPreset(namaBahan);
+                }
+
+                const qty = parseFloat(row.querySelector('.qty-input').value) || 0;
+                const satuan = row.querySelector('.satuan-select').value;
+                const harga = parseFloat(row.querySelector('.harga-input').value) || 0;
+                const totalRow = qty * harga;
+
+                if(qty > 0 && harga >= 0) {
+                    items.push({ namaBahan, qty, satuan, hargaSatuan: harga, total: totalRow });
+                    grandTotal += totalRow;
+                }
+            }
+
+            if(items.length === 0) {
+                alert("Masukkan minimal 1 item belanja yang valid!");
+                return;
+            }
+
+            const data = {
+                tanggal,
+                keterangan: ket,
+                items,
+                totalPengeluaran: grandTotal
+            };
+
+            await window.dbSimpanPengeluaran(data);
+            
+            // Reset Form
+            document.getElementById('keteranganBelanja').value = '';
+            document.getElementById('containerItemBelanja').innerHTML = '';
+            tambahBarisItem();
+        }
+
+        async function simpanPatungan(e) {
+            e.preventDefault();
+            const nama = document.getElementById('namaAnggota').value.trim();
+            const nominal = parseFloat(document.getElementById('nominalPatungan').value) || 0;
+            const bulanStr = document.getElementById('bulanPatungan').value; // YYYY-MM
+
+            if(!nama || nominal <= 0 || !bulanStr) return;
+
+            const data = {
+                nama,
+                nominal,
+                bulan: bulanStr,
+                status: 'Lunas',
+                tanggalInput: new Date().toISOString()
+            };
+
+            await window.dbSimpanPatungan(data);
+            document.getElementById('namaAnggota').value = '';
+            document.getElementById('nominalPatungan').value = '';
+        }
+
+        function tambahMasterPreset() {
+            const input = document.getElementById('inputPresetBaru');
+            const val = input.value.trim();
+            if(val) {
+                window.dbTambahPreset(val);
+                input.value = '';
+            }
+        }
+
+        // --- Render Engine ---
+        window.renderAll = function() {
+            const bulanVal = document.getElementById('filterBulan').value;
+            const tahunVal = document.getElementById('filterTahun').value;
+
+            // Label Periode
+            const bulanNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            const textFilterBulan = bulanVal === 'ALL' ? 'Semua Bulan' : bulanNames[parseInt(bulanVal)];
+            document.getElementById('currentFilterLabel').textContent = `${textFilterBulan} Tahun ${tahunVal}`;
+            document.getElementById('labelFilterPatungan').textContent = `${textFilterBulan} ${tahunVal}`;
+            document.getElementById('labelFilterPengeluaran').textContent = `${textFilterBulan} ${tahunVal}`;
+
+            // Filter Data
+            const filteredPatungan = window.appState.patungan.filter(p => {
+                if(!p.bulan) return true;
+                const [y, m] = p.bulan.split('-');
+                const matchY = y === tahunVal;
+                const matchM = bulanVal === 'ALL' || parseInt(m) - 1 === parseInt(bulanVal);
+                return matchY && matchM;
+            });
+
+            const filteredPengeluaran = window.appState.pengeluaran.filter(p => {
+                if(!p.tanggal) return true;
+                const d = new Date(p.tanggal);
+                const matchY = d.getFullYear().toString() === tahunVal;
+                const matchM = bulanVal === 'ALL' || d.getMonth() === parseInt(bulanVal);
+                return matchY && matchM;
+            });
+
+            // Calculate Totals
+            const totalKas = filteredPatungan.filter(p => p.status === 'Lunas').reduce((acc, c) => acc + (c.nominal || 0), 0);
+            const totalPengeluaran = filteredPengeluaran.reduce((acc, c) => acc + (c.totalPengeluaran || 0), 0);
+            const sisaSaldo = totalKas - totalPengeluaran;
+
+            // Render Metrics
+            document.getElementById('statKas').textContent = formatRupiah(totalKas);
+            document.getElementById('statKasCount').textContent = `${filteredPatungan.filter(p => p.status === 'Lunas').length} iuran lunas`;
+
+            document.getElementById('statPengeluaran').textContent = formatRupiah(totalPengeluaran);
+            let totalItemCount = 0;
+            filteredPengeluaran.forEach(p => totalItemCount += (p.items ? p.items.length : 0));
+            document.getElementById('statItemsCount').textContent = `${totalItemCount} item belanja`;
+
+            document.getElementById('statSaldo').textContent = formatRupiah(sisaSaldo);
+            const descSaldo = document.getElementById('statSaldoDesc');
+            const indSaldo = document.getElementById('saldoIndicator');
+            if (sisaSaldo >= 0) {
+                descSaldo.textContent = "Saldo kas aman & surplus";
+                descSaldo.className = "text-xs text-emerald-600 font-semibold mt-1";
+                indSaldo.className = "absolute bottom-0 left-0 right-0 h-1 bg-emerald-500";
+            } else {
+                descSaldo.textContent = "Kas defisit (Nominal pengeluaran melebihi kas)";
+                descSaldo.className = "text-xs text-rose-600 font-bold mt-1";
+                indSaldo.className = "absolute bottom-0 left-0 right-0 h-1 bg-rose-500";
+            }
+
+            // Render Sub-components
+            renderTabelPatungan(filteredPatungan);
+            renderTabelPengeluaran(filteredPengeluaran);
+            renderSummaryBahan(filteredPengeluaran);
+            renderPresets();
+            renderCharts(window.appState.patungan, window.appState.pengeluaran, tahunVal);
+        };
+
+        function renderTabelPatungan(data) {
+            const tbody = document.getElementById('tabelPatunganBody');
+            tbody.innerHTML = '';
+
+            if(data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-stone-400">Belum ada data patungan pada periode ini.</td></tr>`;
+                return;
+            }
+
+            data.sort((a,b) => (b.bulan || '').localeCompare(a.bulan || '')).forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 transition";
+                
+                const isLunas = item.status === 'Lunas';
+                const badgeStatus = isLunas 
+                    ? `<button onclick="window.dbTogglePatunganStatus('${item.id}', '${item.status}')" class="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200">LUNAS</button>`
+                    : `<button onclick="window.dbTogglePatunganStatus('${item.id}', '${item.status}')" class="px-2 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 hover:bg-rose-200">BELUM</button>`;
+
+                tr.innerHTML = `
+                    <td class="p-2.5 font-bold text-stone-800">${item.nama}</td>
+                    <td class="p-2.5 text-stone-600">${formatBulanYear(item.bulan)}</td>
+                    <td class="p-2.5 font-bold text-emerald-700">${formatRupiah(item.nominal)}</td>
+                    <td class="p-2.5 text-center">${badgeStatus}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="window.dbHapusPatungan('${item.id}')" class="text-stone-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderTabelPengeluaran(data) {
+            const tbody = document.getElementById('tabelPengeluaranBody');
+            tbody.innerHTML = '';
+
+            if(data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-stone-400">Belum ada transaksi belanja pada periode ini.</td></tr>`;
+                return;
+            }
+
+            data.sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal)).forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 transition";
+
+                let rincianHtml = '';
+                if(item.items && Array.isArray(item.items)) {
+                    rincianHtml = item.items.map(it => 
+                        `<span class="inline-block bg-amber-50 text-amber-900 border border-amber-200 rounded px-1.5 py-0.5 text-[10px] mr-1 mb-1">
+                            <b>${it.namaBahan}</b> (${it.qty} ${it.satuan} @${formatRupiah(it.hargaSatuan)})
+                        </span>`
+                    ).join('');
+                }
+
+                tr.innerHTML = `
+                    <td class="p-2.5 font-medium text-stone-700 whitespace-nowrap">${item.tanggal}<br><span class="text-[10px] text-stone-400">${item.keterangan || ''}</span></td>
+                    <td class="p-2.5">${rincianHtml}</td>
+                    <td class="p-2.5 font-bold text-rose-700 whitespace-nowrap">${formatRupiah(item.totalPengeluaran)}</td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="window.dbHapusPengeluaran('${item.id}')" class="text-stone-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderSummaryBahan(filteredPengeluaran) {
+            const summaryMap = {};
+
+            filteredPengeluaran.forEach(p => {
+                if(p.items && Array.isArray(p.items)) {
+                    p.items.forEach(it => {
+                        if(!summaryMap[it.namaBahan]) {
+                            summaryMap[it.namaBahan] = { totalQty: 0, satuan: it.satuan, totalRp: 0 };
+                        }
+                        summaryMap[it.namaBahan].totalQty += parseFloat(it.qty) || 0;
+                        summaryMap[it.namaBahan].totalRp += parseFloat(it.total) || 0;
+                    });
+                }
+            });
+
+            const container = document.getElementById('containerSummaryBahan');
+            container.innerHTML = '';
+
+            const keys = Object.keys(summaryMap);
+            document.getElementById('countJenisBahan').textContent = `${keys.length} Jenis`;
+
+            if(keys.length === 0) {
+                container.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">Belum ada pengeluaran bahan pada periode ini.</p>`;
+                return;
+            }
+
+            keys.forEach(bahan => {
+                const item = summaryMap[bahan];
+                const card = document.createElement('div');
+                card.className = "bg-stone-50 border border-stone-200 rounded-xl p-3 flex justify-between items-center";
+                card.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-stone-800 text-xs">${bahan}</h4>
+                        <span class="text-[11px] text-stone-500 font-medium">Vol: <b class="text-amber-800">${item.totalQty}</b> ${item.satuan}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-extrabold text-rose-700 block">${formatRupiah(item.totalRp)}</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.renderPresets = function() {
+            const container = document.getElementById('listMasterPresets');
+            container.innerHTML = '';
+            window.appState.presetBahan.forEach(p => {
+                const span = document.createElement('span');
+                span.className = "bg-stone-100 border border-stone-300 text-stone-700 text-[11px] font-semibold px-2 py-0.5 rounded-md";
+                span.textContent = p;
+                container.appendChild(span);
+            });
+        };
+
+        // --- Chart Renderers ---
+        function renderCharts(allPatungan, allPengeluaran, tahunStr) {
+            const bulanLabels = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+            const kasData = new Array(12).fill(0);
+            const pengeluaranData = new Array(12).fill(0);
+
+            allPatungan.filter(p => p.status === 'Lunas' && p.bulan && p.bulan.startsWith(tahunStr)).forEach(p => {
+                const m = parseInt(p.bulan.split('-')[1]) - 1;
+                if(m >= 0 && m < 12) kasData[m] += (p.nominal || 0);
+            });
+
+            allPengeluaran.filter(p => p.tanggal && p.tanggal.startsWith(tahunStr)).forEach(p => {
+                const d = new Date(p.tanggal);
+                const m = d.getMonth();
+                if(m >= 0 && m < 12) pengeluaranData[m] += (p.totalPengeluaran || 0);
+            });
+
+            // Tren Chart
+            const ctxTren = document.getElementById('chartTren').getContext('2d');
+            if(chartTrenInstance) chartTrenInstance.destroy();
+            chartTrenInstance = new Chart(ctxTren, {
+                type: 'line',
+                data: {
+                    labels: bulanLabels,
+                    datasets: [
+                        { label: 'Kas Masuk (Rp)', data: kasData, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.3 },
+                        { label: 'Pengeluaran (Rp)', data: pengeluaranData, borderColor: '#f43f5e', backgroundColor: 'rgba(244, 63, 94, 0.1)', fill: true, tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // Pie Chart (Aggregate per Ingredient)
+            const bahanPieMap = {};
+            allPengeluaran.forEach(p => {
+                if(p.items) {
+                    p.items.forEach(it => {
+                        bahanPieMap[it.namaBahan] = (bahanPieMap[it.namaBahan] || 0) + (it.total || 0);
+                    });
+                }
+            });
+
+            const ctxPie = document.getElementById('chartPieBahan').getContext('2d');
+            if(chartPieInstance) chartPieInstance.destroy();
+
+            const labelsPie = Object.keys(bahanPieMap);
+            const dataPie = Object.values(bahanPieMap);
+
+            if(labelsPie.length === 0) {
+                labelsPie.push("Belum ada data");
+                dataPie.push(1);
+            }
+
+            chartPieInstance = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsPie,
+                    datasets: [{
+                        data: dataPie,
+                        backgroundColor: ['#835a37', '#be9355', '#e0cca8', '#10b981', '#f43f5e', '#3b82f6', '#6366f1']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- Helper Utilities ---
+        function formatRupiah(num) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
+        }
+
+        function formatBulanYear(yyyyMm) {
+            if(!yyyyMm) return '-';
+            const [y, m] = yyyyMm.split('-');
+            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+            return `${months[parseInt(m)-1]} ${y}`;
+        }
+    </script>
+</body>
+</html>
