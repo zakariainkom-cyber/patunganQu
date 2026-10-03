@@ -43,14 +43,14 @@
 
     <!-- Header / Navbar -->
     <header class="bg-coffee-900 text-amber-50 shadow-md sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="max-w-7xl mx-auto px-4 py-3.5 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-3">
             <div class="flex items-center space-x-3">
                 <div class="bg-amber-600 p-2.5 rounded-xl shadow-inner text-white">
                     <i class="fa-solid fa-mug-hot text-2xl"></i>
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight text-amber-100">KopiKas</h1>
-                    <p class="text-xs text-amber-200/80">Rekap Patungan & Belanja Bahan Kopi (Cloud Real-Time)</p>
+                    <p class="text-xs text-amber-200/80">Dashboard Laporan & Manajemen Bahan Kopi</p>
                 </div>
             </div>
 
@@ -64,25 +64,29 @@
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-8">
 
-        <!-- Banner Informasi Filter -->
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-200/80 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3 w-full md:w-auto">
-                <div class="p-3 bg-amber-100 rounded-xl text-amber-800">
-                    <i class="fa-solid fa-calendar-days text-xl"></i>
+        <!-- ========================================== -->
+        <!-- SECTION 1: REPORT & DASHBOARD (BAGIAN ATAS) -->
+        <!-- ========================================== -->
+
+        <!-- Filter Periode Laporan -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-stone-200/80 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3.5 w-full md:w-auto">
+                <div class="p-3 bg-amber-100 rounded-2xl text-amber-800">
+                    <i class="fa-solid fa-chart-column text-2xl"></i>
                 </div>
                 <div>
-                    <span class="text-xs font-bold text-stone-400 uppercase tracking-wider">PERIODE REKAP LAPORAN</span>
-                    <h2 id="currentFilterLabel" class="text-lg font-bold text-stone-800">Semua Bulan</h2>
+                    <span class="text-[11px] font-bold text-stone-400 uppercase tracking-wider block">PERIODE LAPORAN REKAP</span>
+                    <h2 id="currentFilterLabel" class="text-lg sm:text-xl font-extrabold text-stone-800">Semua Bulan</h2>
                 </div>
             </div>
 
             <!-- Filter Dropdowns -->
-            <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                <div class="w-full sm:w-auto flex-1 sm:flex-initial">
-                    <label class="block text-[11px] font-bold text-stone-500 uppercase mb-1">Filter Bulan</label>
-                    <select id="filterBulan" onchange="renderAll()" class="w-full bg-stone-50 border border-stone-300 text-stone-800 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full md:w-auto">
+                <div class="w-1/2 sm:w-auto flex-1">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase mb-1">Pilih Bulan</label>
+                    <select id="filterBulan" onchange="renderAll()" class="w-full bg-stone-50 border border-stone-300 text-stone-800 text-xs sm:text-sm rounded-xl p-2.5 font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none">
                         <option value="ALL">Semua Bulan</option>
                         <option value="0">Januari</option>
                         <option value="1">Februari</option>
@@ -98,186 +102,75 @@
                         <option value="11">Desember</option>
                     </select>
                 </div>
-                <div class="w-full sm:w-auto flex-1 sm:flex-initial">
-                    <label class="block text-[11px] font-bold text-stone-500 uppercase mb-1">Filter Tahun</label>
-                    <select id="filterTahun" onchange="renderAll()" class="w-full bg-stone-50 border border-stone-300 text-stone-800 text-sm rounded-xl p-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                        <!-- Filled by JS -->
+                <div class="w-1/2 sm:w-auto flex-1">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase mb-1">Pilih Tahun</label>
+                    <select id="filterTahun" onchange="renderAll()" class="w-full bg-stone-50 border border-stone-300 text-stone-800 text-xs sm:text-sm rounded-xl p-2.5 font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                        <!-- Populated by JS -->
                     </select>
                 </div>
             </div>
         </div>
 
-        <!-- Metric Cards -->
+        <!-- Cards Ringkasan Keuangan (Metric Cards) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Total Kas -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/80 relative overflow-hidden">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/80 relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">TOTAL KAS PATUNGAN</p>
-                        <h3 id="statKas" class="text-2xl font-extrabold text-emerald-600">Rp 0</h3>
-                        <p id="statKasCount" class="text-xs text-stone-500 mt-1">0 iuran lunas</p>
+                        <p class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">TOTAL KAS PATUNGAN</p>
+                        <h3 id="statKas" class="text-2xl font-black text-emerald-600 mt-1">Rp 0</h3>
+                        <p id="statKasCount" class="text-xs text-stone-500 mt-1 font-medium">0 iuran lunas</p>
                     </div>
                     <div class="p-3 bg-emerald-50 rounded-xl text-emerald-600">
                         <i class="fa-solid fa-hand-holding-dollar text-xl"></i>
                     </div>
                 </div>
-                <div class="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500"></div>
+                <div class="w-full h-1 bg-emerald-500 rounded-full mt-3"></div>
             </div>
 
             <!-- Total Pengeluaran -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/80 relative overflow-hidden">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/80 relative overflow-hidden flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">PENGELUARAN BAHAN KOPI</p>
-                        <h3 id="statPengeluaran" class="text-2xl font-extrabold text-rose-600">Rp 0</h3>
-                        <p id="statItemsCount" class="text-xs text-stone-500 mt-1">0 item belanja</p>
+                        <p class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">TOTAL BELANJA BAHAN</p>
+                        <h3 id="statPengeluaran" class="text-2xl font-black text-rose-600 mt-1">Rp 0</h3>
+                        <p id="statItemsCount" class="text-xs text-stone-500 mt-1 font-medium">0 item belanja</p>
                     </div>
                     <div class="p-3 bg-rose-50 rounded-xl text-rose-600">
                         <i class="fa-solid fa-cart-shopping text-xl"></i>
                     </div>
                 </div>
-                <div class="absolute bottom-0 left-0 right-0 h-1 bg-rose-500"></div>
+                <div class="w-full h-1 bg-rose-500 rounded-full mt-3"></div>
             </div>
 
             <!-- Sisa Saldo Kas -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/80 relative overflow-hidden sm:col-span-2 lg:col-span-1">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200/80 relative overflow-hidden sm:col-span-2 lg:col-span-1 flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-1">SISA SALDO KAS</p>
-                        <h3 id="statSaldo" class="text-2xl font-extrabold text-amber-700">Rp 0</h3>
-                        <p id="statSaldoDesc" class="text-xs text-stone-500 mt-1">Status Sisa Saldo</p>
+                        <p class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">SISA SALDO KAS</p>
+                        <h3 id="statSaldo" class="text-2xl font-black text-amber-700 mt-1">Rp 0</h3>
+                        <p id="statSaldoDesc" class="text-xs font-semibold text-stone-500 mt-1">Status Saldo</p>
                     </div>
                     <div class="p-3 bg-amber-50 rounded-xl text-amber-700">
                         <i class="fa-solid fa-wallet text-xl"></i>
                     </div>
                 </div>
-                <div id="saldoIndicator" class="absolute bottom-0 left-0 right-0 h-1 bg-amber-500"></div>
+                <div id="saldoIndicator" class="w-full h-1 bg-amber-500 rounded-full mt-3"></div>
             </div>
         </div>
 
-        <!-- Form Input & Ringkasan Akumulasi Bahan -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Left Side: Forms (2 Columns on LG) -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- Form Multi-Item Belanja Bahan Kopi -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                    <div class="flex items-center justify-between mb-4 border-b pb-3">
-                        <h3 class="font-bold text-stone-800 text-base flex items-center gap-2">
-                            <i class="fa-solid fa-receipt text-amber-700"></i> Catat Belanja Bahan Kopi
-                        </h3>
-                        <button onclick="tambahBarisItem()" type="button" class="text-xs bg-amber-100 text-amber-800 font-bold px-3 py-1.5 rounded-lg hover:bg-amber-200 transition">
-                            <i class="fa-solid fa-plus mr-1"></i> Tambah Item
-                        </button>
-                    </div>
-
-                    <form id="formPengeluaran" onsubmit="simpanPengeluaran(event)" class="space-y-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-stone-600 mb-1">Tanggal Transaksi</label>
-                                <input type="date" id="tglBelanja" required class="w-full border border-stone-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-stone-600 mb-1">Keterangan / Lokasi Toko</label>
-                                <input type="text" id="keteranganBelanja" placeholder="Contoh: Toko Bahan Kue XYZ / Indomaret" class="w-full border border-stone-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                            </div>
-                        </div>
-
-                        <!-- Container Baris Item -->
-                        <div class="space-y-3">
-                            <label class="block text-xs font-bold text-stone-600">Daftar Item Belanja</label>
-                            <div id="containerItemBelanja" class="space-y-3">
-                                <!-- Dynamic Rows Inserted by JS -->
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row justify-between items-center pt-3 border-t gap-3">
-                            <div class="text-right w-full sm:w-auto">
-                                <span class="text-xs text-stone-500">Total Transaksi Ini:</span>
-                                <div id="labelTotalBelanjaNota" class="text-xl font-extrabold text-amber-800">Rp 0</div>
-                            </div>
-                            <button type="submit" class="w-full sm:w-auto bg-amber-700 text-white font-bold px-6 py-2.5 rounded-xl hover:bg-amber-800 transition shadow-md">
-                                <i class="fa-solid fa-floppy-disk mr-2"></i> Simpan Transaksi Belanja
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Form Patungan Kas -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                    <h3 class="font-bold text-stone-800 text-base mb-4 border-b pb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-user-plus text-emerald-600"></i> Catat Patungan Anggota
-                    </h3>
-                    <form id="formPatungan" onsubmit="simpanPatungan(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-stone-600 mb-1">Nama Anggota</label>
-                            <input type="text" id="namaAnggota" placeholder="Nama..." required class="w-full border border-stone-300 rounded-xl p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-stone-600 mb-1">Nominal (Rp)</label>
-                            <input type="number" id="nominalPatungan" placeholder="50000" required class="w-full border border-stone-300 rounded-xl p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-stone-600 mb-1">Bulan Patungan</label>
-                            <input type="month" id="bulanPatungan" required class="w-full border border-stone-300 rounded-xl p-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        </div>
-                        <div class="flex items-end">
-                            <button type="submit" class="w-full bg-emerald-600 text-white font-bold p-2 rounded-xl hover:bg-emerald-700 transition shadow-sm text-sm">
-                                <i class="fa-solid fa-plus mr-1"></i> Simpan
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-            </div>
-
-            <!-- Right Side: Summary per Ingredient & Preset Manager -->
-            <div class="space-y-6">
-                <!-- Ringkasan Akumulasi Bahan Kopi -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                    <h3 class="font-bold text-stone-800 text-base mb-3 flex items-center justify-between">
-                        <span class="flex items-center gap-2"><i class="fa-solid fa-cubes text-amber-600"></i> Akumulasi Bahan</span>
-                        <span class="text-xs bg-amber-100 text-amber-800 font-normal px-2 py-0.5 rounded-full" id="countJenisBahan">0 Jenis</span>
-                    </h3>
-                    <p class="text-xs text-stone-500 mb-4">Total kuantitas & nominal belanja berdasarkan bahan pada periode terfilter.</p>
-                    
-                    <div id="containerSummaryBahan" class="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-                        <!-- Loaded by JS -->
-                    </div>
-                </div>
-
-                <!-- Kelola Master Preset Bahan -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                    <h3 class="font-bold text-stone-800 text-sm mb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-list-check text-stone-500"></i> Master Master Bahan
-                    </h3>
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="inputPresetBaru" placeholder="Bahan Baru (ex: Caramel)" class="flex-1 border border-stone-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
-                        <button onclick="tambahMasterPreset()" type="button" class="bg-stone-800 text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-stone-900">
-                            Tambah
-                        </button>
-                    </div>
-                    <div id="listMasterPresets" class="flex flex-wrap gap-1.5">
-                        <!-- Loaded by JS -->
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Section Charts -->
+        <!-- Section Grafik & Visual Laporan -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                <h3 class="font-bold text-stone-800 text-sm mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-line text-amber-700"></i> Tren Bulanan (Kas vs Pengeluaran)
+            <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                <h3 class="font-bold text-stone-800 text-sm sm:text-base mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-amber-700"></i> Grafik Tren Bulanan (Kas vs Belanja)
                 </h3>
                 <div class="h-64">
                     <canvas id="chartTren"></canvas>
                 </div>
             </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                <h3 class="font-bold text-stone-800 text-sm mb-4 flex items-center gap-2">
+            <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                <h3 class="font-bold text-stone-800 text-sm sm:text-base mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-chart-pie text-amber-700"></i> Proporsi Pengeluaran per Bahan
                 </h3>
                 <div class="h-64 flex items-center justify-center">
@@ -286,42 +179,16 @@
             </div>
         </div>
 
-        <!-- Section Tables (Tabel Kas Patungan & Tabel Transaksi Belanja) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Section Tabel Riwayat & Akumulasi Bahan -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Tabel Patungan Kas -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-stone-800 text-base flex items-center gap-2">
-                        <i class="fa-solid fa-users text-emerald-600"></i> Rekap Kas Patungan
-                    </h3>
-                    <span id="labelFilterPatungan" class="text-xs bg-stone-100 text-stone-600 px-2.5 py-1 rounded-lg">All</span>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="bg-stone-100 text-stone-600 font-bold border-b border-stone-200">
-                                <th class="p-2.5">Anggota</th>
-                                <th class="p-2.5">Bulan</th>
-                                <th class="p-2.5">Nominal</th>
-                                <th class="p-2.5 text-center">Status</th>
-                                <th class="p-2.5 text-center">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelPatunganBody" class="divide-y divide-stone-100">
-                            <!-- JS populated -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
             <!-- Tabel Riwayat Belanja Bahan -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-stone-200">
+            <div class="lg:col-span-2 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-stone-800 text-base flex items-center gap-2">
                         <i class="fa-solid fa-boxes-packing text-amber-700"></i> Riwayat Nota Belanja
                     </h3>
-                    <span id="labelFilterPengeluaran" class="text-xs bg-stone-100 text-stone-600 px-2.5 py-1 rounded-lg">All</span>
+                    <span id="labelFilterPengeluaran" class="text-xs bg-stone-100 text-stone-600 font-semibold px-2.5 py-1 rounded-lg">All</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-xs">
@@ -340,6 +207,171 @@
                 </div>
             </div>
 
+            <!-- Akumulasi Laporan Bahan -->
+            <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-stone-100">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-cubes text-amber-600"></i>
+                        <h3 class="font-bold text-stone-800 text-base">Akumulasi Bahan</h3>
+                    </div>
+                    <span class="text-[11px] bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-full" id="countJenisBahan">0 Jenis</span>
+                </div>
+                <p class="text-xs text-stone-400 mb-3">Total kuantitas & nominal belanja berdasarkan jenis bahan di periode ini.</p>
+                
+                <div id="containerSummaryBahan" class="space-y-2.5 max-h-[350px] overflow-y-auto pr-1">
+                    <!-- JS Loaded -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Tabel Kas Patungan Anggota -->
+        <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-stone-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-users text-emerald-600"></i> Rekap Patungan Anggota
+                </h3>
+                <span id="labelFilterPatungan" class="text-xs bg-stone-100 text-stone-600 font-semibold px-2.5 py-1 rounded-lg">All</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-stone-100 text-stone-600 font-bold border-b border-stone-200">
+                            <th class="p-2.5">Anggota</th>
+                            <th class="p-2.5">Bulan</th>
+                            <th class="p-2.5">Nominal</th>
+                            <th class="p-2.5 text-center">Status</th>
+                            <th class="p-2.5 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelPatunganBody" class="divide-y divide-stone-100">
+                        <!-- JS populated -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- SECTION 2: AREA INPUT DATA (BAGIAN BAWAH) -->
+        <!-- ========================================== -->
+        <div class="pt-8 border-t-2 border-dashed border-stone-300">
+            <div class="flex items-center gap-2 mb-6">
+                <div class="p-2 bg-amber-800 rounded-lg text-white">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-stone-800">Panel Form Input & Kelola Master Data</h2>
+                    <p class="text-xs text-stone-500">Gunakan form di bawah ini untuk mencatat belanja, kas patungan, atau memperbarui master bahan.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Form Catat Belanja Bahan Kopi (2 Kolom) -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                        <div class="flex items-center justify-between pb-4 mb-4 border-b border-stone-100">
+                            <div class="flex items-center gap-2.5">
+                                <div class="p-2 bg-amber-50 rounded-lg text-amber-700">
+                                    <i class="fa-solid fa-cart-plus text-lg"></i>
+                                </div>
+                                <h3 class="font-bold text-stone-800 text-base">Input Transaksi Belanja</h3>
+                            </div>
+                            <button onclick="tambahBarisItem()" type="button" class="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-plus text-xs"></i> Tambah Item
+                            </button>
+                        </div>
+
+                        <form id="formPengeluaran" onsubmit="simpanPengeluaran(event)" class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-stone-600 mb-1">Tanggal Transaksi</label>
+                                    <input type="date" id="tglBelanja" required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50/50">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-stone-600 mb-1">Toko / Keterangan Belanja</label>
+                                    <input type="text" id="keteranganBelanja" placeholder="Contoh: Toko Bahan Kue ABC / Indomaret" class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50/50">
+                                </div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="block text-xs font-bold text-stone-600">Daftar Item Belanja</label>
+                                <div id="containerItemBelanja" class="space-y-2.5">
+                                    <!-- Dynamic Rows Injected by JS -->
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-stone-100 gap-3">
+                                <div class="w-full sm:w-auto text-left">
+                                    <span class="text-xs text-stone-400 font-semibold uppercase tracking-wider block">Total Nota Ini</span>
+                                    <div id="labelTotalBelanjaNota" class="text-2xl font-black text-amber-800">Rp 0</div>
+                                </div>
+                                <button type="submit" class="w-full sm:w-auto bg-amber-800 hover:bg-amber-900 text-white font-bold px-7 py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 text-sm">
+                                    <i class="fa-solid fa-floppy-disk"></i> Simpan Belanja
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Form Catat Patungan Anggota -->
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                        <div class="flex items-center gap-2.5 pb-4 mb-4 border-b border-stone-100">
+                            <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                                <i class="fa-solid fa-user-plus text-lg"></i>
+                            </div>
+                            <h3 class="font-bold text-stone-800 text-base">Kelola Input Patungan Anggota</h3>
+                        </div>
+
+                        <form id="formPatungan" onsubmit="simpanPatungan(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-stone-600 mb-1">Nama Anggota</label>
+                                <input type="text" id="namaAnggota" placeholder="Nama anggota..." required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/50">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-stone-600 mb-1">Nominal (Rp)</label>
+                                <input type="number" id="nominalPatungan" placeholder="50000" required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/50">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-stone-600 mb-1">Bulan Patungan</label>
+                                <input type="month" id="bulanPatungan" required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/50">
+                            </div>
+                            <div class="sm:col-span-3 flex justify-end">
+                                <button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-sm text-xs sm:text-sm flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-check"></i> Simpan Kas Patungan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Kelola Master Bahan (Kolom Kanan) -->
+                <div class="space-y-6">
+                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                        <div class="flex items-center gap-2.5 pb-3 mb-3 border-b border-stone-100">
+                            <div class="p-2 bg-stone-100 rounded-lg text-stone-600">
+                                <i class="fa-solid fa-tags text-lg"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-stone-800 text-base">Kelola Master Bahan</h3>
+                                <p class="text-[11px] text-stone-400">Daftar preset bahan untuk dropdown belanja</p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="inputPresetBaru" placeholder="Bahan baru (ex: Syrup Aren)" class="flex-1 border border-stone-300 rounded-xl p-2 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50/50">
+                            <button onclick="tambahMasterPreset()" type="button" class="bg-stone-800 hover:bg-stone-900 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+                                Tambah
+                            </button>
+                        </div>
+
+                        <div id="listMasterPresets" class="flex flex-wrap gap-1.5 max-h-60 overflow-y-auto p-1">
+                            <!-- JS Loaded -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
     </main>
@@ -354,11 +386,10 @@
             addDoc, 
             deleteDoc, 
             updateDoc, 
-            doc,
-            setDoc 
+            doc 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Firebase Configuration milik zakariainkom-cyber (patunganqu)
+        // Firebase Configuration (patunganqu)
         const firebaseConfig = {
             apiKey: "AIzaSyCMjM-vFWSzIv3VASrFhV4mv0p9sDtUWWo",
             authDomain: "patunganqu.firebaseapp.com",
@@ -369,16 +400,16 @@
             measurementId: "G-HP0NZGVPQE"
         };
 
-        // App State Global
+        // Global App State
         window.appState = {
             patungan: [],
             pengeluaran: [],
-            presetBahan: ["Kopi", "Susu", "UHT", "Gula Aren", "Cup / Gelas", "Syrup Vanilla"],
+            presetBahan: ["Kopi", "Susu UHT", "Gula Aren", "Cup 16oz", "Syrup Vanilla", "Sedotan"],
+            presetDocs: [],
             db: null,
             isOnline: false
         };
 
-        // Initializer
         try {
             const app = initializeApp(firebaseConfig);
             window.appState.db = getFirestore(app);
@@ -387,7 +418,7 @@
             updateStatusBadge(true, "Cloud Connected (Real-time)");
             initRealtimeListeners();
         } catch (err) {
-            console.warn("Koneksi Firebase gagal, berpindah ke LocalStorage fallback:", err);
+            console.warn("Koneksi Firebase gagal, berpindah ke Offline LocalStorage mode:", err);
             updateStatusBadge(false, "Offline Demo Mode");
             loadLocalFallback();
         }
@@ -410,22 +441,24 @@
             onSnapshot(collection(db, "patungan"), (snapshot) => {
                 window.appState.patungan = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 window.renderAll();
-            }, (error) => console.error("Err Patungan:", error));
+            });
 
             // Listen Pengeluaran
             onSnapshot(collection(db, "pengeluaran"), (snapshot) => {
                 window.appState.pengeluaran = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 window.renderAll();
-            }, (error) => console.error("Err Pengeluaran:", error));
+            });
 
             // Listen Preset Bahan
             onSnapshot(collection(db, "presets"), (snapshot) => {
                 if (!snapshot.empty) {
-                    const presetArr = snapshot.docs.map(doc => doc.data().name);
+                    window.appState.presetDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const presetArr = window.appState.presetDocs.map(d => d.name);
                     if(presetArr.length > 0) window.appState.presetBahan = presetArr;
                 }
                 window.renderPresets();
-            }, (error) => console.error("Err Presets:", error));
+                window.refreshAllBahanDropdowns();
+            });
         }
 
         function loadLocalFallback() {
@@ -433,9 +466,11 @@
             window.appState.pengeluaran = JSON.parse(localStorage.getItem('kopikas_pengeluaran')) || [];
             window.appState.presetBahan = JSON.parse(localStorage.getItem('kopikas_presets')) || window.appState.presetBahan;
             window.renderAll();
+            window.renderPresets();
+            window.refreshAllBahanDropdowns();
         }
 
-        // Global Operations Exported to Window
+        // Window DB Functions
         window.dbSimpanPatungan = async function(data) {
             if (window.appState.isOnline) {
                 await addDoc(collection(window.appState.db, "patungan"), data);
@@ -459,12 +494,14 @@
         };
 
         window.dbHapusPatungan = async function(id) {
-            if (window.appState.isOnline) {
-                await deleteDoc(doc(window.appState.db, "patungan", id));
-            } else {
-                window.appState.patungan = window.appState.patungan.filter(p => p.id !== id);
-                localStorage.setItem('kopikas_patungan', JSON.stringify(window.appState.patungan));
-                window.renderAll();
+            if(confirm("Yakin ingin menghapus data patungan ini?")) {
+                if (window.appState.isOnline) {
+                    await deleteDoc(doc(window.appState.db, "patungan", id));
+                } else {
+                    window.appState.patungan = window.appState.patungan.filter(p => p.id !== id);
+                    localStorage.setItem('kopikas_patungan', JSON.stringify(window.appState.patungan));
+                    window.renderAll();
+                }
             }
         };
 
@@ -479,29 +516,46 @@
         };
 
         window.dbHapusPengeluaran = async function(id) {
-            if (window.appState.isOnline) {
-                await deleteDoc(doc(window.appState.db, "pengeluaran", id));
-            } else {
-                window.appState.pengeluaran = window.appState.pengeluaran.filter(p => p.id !== id);
-                localStorage.setItem('kopikas_pengeluaran', JSON.stringify(window.appState.pengeluaran));
-                window.renderAll();
+            if(confirm("Yakin menghapus transaksi belanja ini?")) {
+                if (window.appState.isOnline) {
+                    await deleteDoc(doc(window.appState.db, "pengeluaran", id));
+                } else {
+                    window.appState.pengeluaran = window.appState.pengeluaran.filter(p => p.id !== id);
+                    localStorage.setItem('kopikas_pengeluaran', JSON.stringify(window.appState.pengeluaran));
+                    window.renderAll();
+                }
             }
         };
 
         window.dbTambahPreset = async function(nama) {
             if(!window.appState.presetBahan.includes(nama)) {
-                window.appState.presetBahan.push(nama);
                 if (window.appState.isOnline) {
                     await addDoc(collection(window.appState.db, "presets"), { name: nama });
                 } else {
+                    window.appState.presetBahan.push(nama);
                     localStorage.setItem('kopikas_presets', JSON.stringify(window.appState.presetBahan));
                     window.renderPresets();
+                    window.refreshAllBahanDropdowns();
                 }
+            }
+        };
+
+        window.dbHapusPreset = async function(nama) {
+            if (window.appState.isOnline) {
+                const target = window.appState.presetDocs.find(d => d.name === nama);
+                if(target) {
+                    await deleteDoc(doc(window.appState.db, "presets", target.id));
+                }
+            } else {
+                window.appState.presetBahan = window.appState.presetBahan.filter(b => b !== nama);
+                localStorage.setItem('kopikas_presets', JSON.stringify(window.appState.presetBahan));
+                window.renderPresets();
+                window.refreshAllBahanDropdowns();
             }
         };
     </script>
 
-    <!-- App UI & Business Logic JavaScript -->
+    <!-- App UI & Business Logic -->
     <script>
         let chartTrenInstance = null;
         let chartPieInstance = null;
@@ -509,15 +563,13 @@
         document.addEventListener("DOMContentLoaded", () => {
             initYearFilter();
             setDefaultDates();
-            tambahBarisItem(); // 1 row default
+            tambahBarisItem();
         });
 
         function setDefaultDates() {
             const today = new Date();
             document.getElementById('tglBelanja').value = today.toISOString().split('T')[0];
-            
-            const monthStr = today.toISOString().slice(0,7);
-            document.getElementById('bulanPatungan').value = monthStr;
+            document.getElementById('bulanPatungan').value = today.toISOString().slice(0,7);
         }
 
         function initYearFilter() {
@@ -538,24 +590,21 @@
             const container = document.getElementById('containerItemBelanja');
             const rowId = 'item_row_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
 
-            let optionsHtml = window.appState.presetBahan.map(b => `<option value="${b}">${b}</option>`).join('');
-            optionsHtml += `<option value="NEW_PRESET">+ Tambah Bahan Baru...</option>`;
-
             const div = document.createElement('div');
             div.id = rowId;
-            div.className = "item-belanja-row bg-stone-50 p-3 rounded-xl border border-stone-200 grid grid-cols-12 gap-2 items-center";
+            div.className = "item-belanja-row bg-stone-50 p-2.5 rounded-xl border border-stone-200 grid grid-cols-12 gap-2 items-center";
             div.innerHTML = `
                 <div class="col-span-12 sm:col-span-4">
-                    <select onchange="handleSelectBahanChange(this, '${rowId}')" class="bahan-select w-full border border-stone-300 rounded-lg p-1.5 text-xs bg-white focus:ring-1 focus:ring-amber-500">
-                        ${optionsHtml}
+                    <select onchange="handleSelectBahanChange(this, '${rowId}')" class="bahan-select w-full border border-stone-300 rounded-lg p-2 text-xs bg-white focus:ring-1 focus:ring-amber-500 font-medium">
+                        <!-- Options filled dynamically -->
                     </select>
-                    <input type="text" placeholder="Nama bahan baru..." class="bahan-custom-input hidden w-full border border-stone-300 rounded-lg p-1.5 text-xs mt-1 bg-amber-50" />
+                    <input type="text" placeholder="Masukkan nama bahan baru..." class="bahan-custom-input hidden w-full border border-stone-300 rounded-lg p-2 text-xs mt-1 bg-amber-50" />
                 </div>
                 <div class="col-span-4 sm:col-span-2">
-                    <input type="number" step="any" placeholder="Qty" oninput="hitungSubtotalRow('${rowId}')" class="qty-input w-full border border-stone-300 rounded-lg p-1.5 text-xs bg-white text-center" required min="0.01">
+                    <input type="number" step="any" placeholder="Qty" oninput="updateTotalBelanjaNota()" class="qty-input w-full border border-stone-300 rounded-lg p-2 text-xs bg-white text-center font-semibold" required min="0.01">
                 </div>
                 <div class="col-span-3 sm:col-span-2">
-                    <select class="satuan-select w-full border border-stone-300 rounded-lg p-1.5 text-xs bg-white">
+                    <select class="satuan-select w-full border border-stone-300 rounded-lg p-2 text-xs bg-white font-medium">
                         <option value="Pcs">Pcs</option>
                         <option value="Kg">Kg</option>
                         <option value="Gram">Gram</option>
@@ -566,17 +615,41 @@
                     </select>
                 </div>
                 <div class="col-span-4 sm:col-span-3">
-                    <input type="number" placeholder="Harga/Satuan" oninput="hitungSubtotalRow('${rowId}')" class="harga-input w-full border border-stone-300 rounded-lg p-1.5 text-xs bg-white" required min="0">
+                    <input type="number" placeholder="Harga Satuan" oninput="updateTotalBelanjaNota()" class="harga-input w-full border border-stone-300 rounded-lg p-2 text-xs bg-white font-semibold" required min="0">
                 </div>
                 <div class="col-span-1 text-center">
-                    <button type="button" onclick="hapusBarisItem('${rowId}')" class="text-rose-500 hover:text-rose-700 p-1">
+                    <button type="button" onclick="hapusBarisItem('${rowId}')" class="text-stone-400 hover:text-rose-600 p-1 transition">
                         <i class="fa-solid fa-trash-can text-sm"></i>
                     </button>
                 </div>
             `;
             container.appendChild(div);
+            populateDropdownOptions(div.querySelector('.bahan-select'));
             updateTotalBelanjaNota();
         }
+
+        function populateDropdownOptions(selectEl) {
+            const currentVal = selectEl.value;
+            let optionsHtml = `<option value="" disabled selected>-- Pilih Bahan --</option>`;
+            window.appState.presetBahan.forEach(b => {
+                optionsHtml += `<option value="${b}">${b}</option>`;
+            });
+            optionsHtml += `<option value="NEW_PRESET">+ Tambah Bahan Baru...</option>`;
+            selectEl.innerHTML = optionsHtml;
+            if(currentVal && window.appState.presetBahan.includes(currentVal)) {
+                selectEl.value = currentVal;
+            }
+        }
+
+        window.refreshAllBahanDropdowns = function() {
+            document.querySelectorAll('.item-belanja-row .bahan-select').forEach(selectEl => {
+                const selected = selectEl.value;
+                populateDropdownOptions(selectEl);
+                if(selected && window.appState.presetBahan.includes(selected)) {
+                    selectEl.value = selected;
+                }
+            });
+        };
 
         function handleSelectBahanChange(selectEl, rowId) {
             const row = document.getElementById(rowId);
@@ -597,12 +670,8 @@
                 document.getElementById(rowId).remove();
                 updateTotalBelanjaNota();
             } else {
-                alert("Minimal harus ada 1 item dalam transaksi!");
+                alert("Minimal harus ada 1 baris item belanja!");
             }
-        }
-
-        function hitungSubtotalRow(rowId) {
-            updateTotalBelanjaNota();
         }
 
         function updateTotalBelanjaNota() {
@@ -615,7 +684,7 @@
             document.getElementById('labelTotalBelanjaNota').textContent = formatRupiah(total);
         }
 
-        // --- Core Handlers ---
+        // --- Core Form Handlers ---
         async function simpanPengeluaran(e) {
             e.preventDefault();
             const tanggal = document.getElementById('tglBelanja').value;
@@ -629,6 +698,8 @@
                 const selectBahan = row.querySelector('.bahan-select').value;
                 const customBahan = row.querySelector('.bahan-custom-input').value.trim();
                 
+                if(!selectBahan) continue;
+
                 let namaBahan = selectBahan;
                 if(selectBahan === 'NEW_PRESET') {
                     if(!customBahan) continue;
@@ -648,7 +719,7 @@
             }
 
             if(items.length === 0) {
-                alert("Masukkan minimal 1 item belanja yang valid!");
+                alert("Pilih bahan dan masukkan data item belanja yang valid!");
                 return;
             }
 
@@ -671,7 +742,7 @@
             e.preventDefault();
             const nama = document.getElementById('namaAnggota').value.trim();
             const nominal = parseFloat(document.getElementById('nominalPatungan').value) || 0;
-            const bulanStr = document.getElementById('bulanPatungan').value; // YYYY-MM
+            const bulanStr = document.getElementById('bulanPatungan').value;
 
             if(!nama || nominal <= 0 || !bulanStr) return;
 
@@ -702,14 +773,14 @@
             const bulanVal = document.getElementById('filterBulan').value;
             const tahunVal = document.getElementById('filterTahun').value;
 
-            // Label Periode
             const bulanNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             const textFilterBulan = bulanVal === 'ALL' ? 'Semua Bulan' : bulanNames[parseInt(bulanVal)];
-            document.getElementById('currentFilterLabel').textContent = `${textFilterBulan} Tahun ${tahunVal}`;
+            
+            document.getElementById('currentFilterLabel').textContent = `${textFilterBulan} ${tahunVal}`;
             document.getElementById('labelFilterPatungan').textContent = `${textFilterBulan} ${tahunVal}`;
             document.getElementById('labelFilterPengeluaran').textContent = `${textFilterBulan} ${tahunVal}`;
 
-            // Filter Data
+            // Filtering
             const filteredPatungan = window.appState.patungan.filter(p => {
                 if(!p.bulan) return true;
                 const [y, m] = p.bulan.split('-');
@@ -726,7 +797,7 @@
                 return matchY && matchM;
             });
 
-            // Calculate Totals
+            // Metrics Calculation
             const totalKas = filteredPatungan.filter(p => p.status === 'Lunas').reduce((acc, c) => acc + (c.nominal || 0), 0);
             const totalPengeluaran = filteredPengeluaran.reduce((acc, c) => acc + (c.totalPengeluaran || 0), 0);
             const sisaSaldo = totalKas - totalPengeluaran;
@@ -743,21 +814,20 @@
             document.getElementById('statSaldo').textContent = formatRupiah(sisaSaldo);
             const descSaldo = document.getElementById('statSaldoDesc');
             const indSaldo = document.getElementById('saldoIndicator');
+            
             if (sisaSaldo >= 0) {
-                descSaldo.textContent = "Saldo kas aman & surplus";
-                descSaldo.className = "text-xs text-emerald-600 font-semibold mt-1";
-                indSaldo.className = "absolute bottom-0 left-0 right-0 h-1 bg-emerald-500";
+                descSaldo.textContent = "Status Kas: Surplus / Aman";
+                descSaldo.className = "text-xs font-bold text-emerald-600 mt-1";
+                indSaldo.className = "w-full h-1 bg-emerald-500 rounded-full mt-3";
             } else {
-                descSaldo.textContent = "Kas defisit (Nominal pengeluaran melebihi kas)";
-                descSaldo.className = "text-xs text-rose-600 font-bold mt-1";
-                indSaldo.className = "absolute bottom-0 left-0 right-0 h-1 bg-rose-500";
+                descSaldo.textContent = "Status Kas: Defisit (Belanja melebihi kas)";
+                descSaldo.className = "text-xs font-bold text-rose-600 mt-1";
+                indSaldo.className = "w-full h-1 bg-rose-500 rounded-full mt-3";
             }
 
-            // Render Sub-components
             renderTabelPatungan(filteredPatungan);
             renderTabelPengeluaran(filteredPengeluaran);
             renderSummaryBahan(filteredPengeluaran);
-            renderPresets();
             renderCharts(window.appState.patungan, window.appState.pengeluaran, tahunVal);
         };
 
@@ -782,10 +852,10 @@
                 tr.innerHTML = `
                     <td class="p-2.5 font-bold text-stone-800">${item.nama}</td>
                     <td class="p-2.5 text-stone-600">${formatBulanYear(item.bulan)}</td>
-                    <td class="p-2.5 font-bold text-emerald-700">${formatRupiah(item.nominal)}</td>
+                    <td class="p-2.5 font-extrabold text-emerald-700">${formatRupiah(item.nominal)}</td>
                     <td class="p-2.5 text-center">${badgeStatus}</td>
                     <td class="p-2.5 text-center">
-                        <button onclick="window.dbHapusPatungan('${item.id}')" class="text-stone-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="window.dbHapusPatungan('${item.id}')" class="text-stone-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -808,18 +878,18 @@
                 let rincianHtml = '';
                 if(item.items && Array.isArray(item.items)) {
                     rincianHtml = item.items.map(it => 
-                        `<span class="inline-block bg-amber-50 text-amber-900 border border-amber-200 rounded px-1.5 py-0.5 text-[10px] mr-1 mb-1">
-                            <b>${it.namaBahan}</b> (${it.qty} ${it.satuan} @${formatRupiah(it.hargaSatuan)})
+                        `<span class="inline-block bg-stone-100 border border-stone-200 rounded px-1.5 py-0.5 text-[10px] mr-1 mb-1">
+                            <b class="text-stone-800">${it.namaBahan}</b> (${it.qty} ${it.satuan} @${formatRupiah(it.hargaSatuan)})
                         </span>`
                     ).join('');
                 }
 
                 tr.innerHTML = `
-                    <td class="p-2.5 font-medium text-stone-700 whitespace-nowrap">${item.tanggal}<br><span class="text-[10px] text-stone-400">${item.keterangan || ''}</span></td>
+                    <td class="p-2.5 font-medium text-stone-700 whitespace-nowrap">${item.tanggal}<br><span class="text-[10px] text-stone-400 font-normal">${item.keterangan || ''}</span></td>
                     <td class="p-2.5">${rincianHtml}</td>
-                    <td class="p-2.5 font-bold text-rose-700 whitespace-nowrap">${formatRupiah(item.totalPengeluaran)}</td>
+                    <td class="p-2.5 font-extrabold text-rose-700 whitespace-nowrap">${formatRupiah(item.totalPengeluaran)}</td>
                     <td class="p-2.5 text-center">
-                        <button onclick="window.dbHapusPengeluaran('${item.id}')" class="text-stone-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="window.dbHapusPengeluaran('${item.id}')" class="text-stone-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -848,21 +918,21 @@
             document.getElementById('countJenisBahan').textContent = `${keys.length} Jenis`;
 
             if(keys.length === 0) {
-                container.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">Belum ada pengeluaran bahan pada periode ini.</p>`;
+                container.innerHTML = `<p class="text-xs text-stone-400 text-center py-6">Belum ada bahan belanjaan di periode ini.</p>`;
                 return;
             }
 
             keys.forEach(bahan => {
                 const item = summaryMap[bahan];
                 const card = document.createElement('div');
-                card.className = "bg-stone-50 border border-stone-200 rounded-xl p-3 flex justify-between items-center";
+                card.className = "bg-stone-50 border border-stone-200 rounded-xl p-2.5 flex justify-between items-center";
                 card.innerHTML = `
                     <div>
                         <h4 class="font-bold text-stone-800 text-xs">${bahan}</h4>
                         <span class="text-[11px] text-stone-500 font-medium">Vol: <b class="text-amber-800">${item.totalQty}</b> ${item.satuan}</span>
                     </div>
                     <div class="text-right">
-                        <span class="text-xs font-extrabold text-rose-700 block">${formatRupiah(item.totalRp)}</span>
+                        <span class="text-xs font-black text-rose-700">${formatRupiah(item.totalRp)}</span>
                     </div>
                 `;
                 container.appendChild(card);
@@ -873,10 +943,13 @@
             const container = document.getElementById('listMasterPresets');
             container.innerHTML = '';
             window.appState.presetBahan.forEach(p => {
-                const span = document.createElement('span');
-                span.className = "bg-stone-100 border border-stone-300 text-stone-700 text-[11px] font-semibold px-2 py-0.5 rounded-md";
-                span.textContent = p;
-                container.appendChild(span);
+                const badge = document.createElement('div');
+                badge.className = "bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm";
+                badge.innerHTML = `
+                    <span>${p}</span>
+                    <button onclick="window.dbHapusPreset('${p}')" class="text-amber-400 hover:text-rose-600 font-bold ml-1 text-xs">×</button>
+                `;
+                container.appendChild(badge);
             });
         };
 
@@ -897,7 +970,7 @@
                 if(m >= 0 && m < 12) pengeluaranData[m] += (p.totalPengeluaran || 0);
             });
 
-            // Tren Chart
+            // Line Chart
             const ctxTren = document.getElementById('chartTren').getContext('2d');
             if(chartTrenInstance) chartTrenInstance.destroy();
             chartTrenInstance = new Chart(ctxTren, {
@@ -912,7 +985,7 @@
                 options: { responsive: true, maintainAspectRatio: false }
             });
 
-            // Pie Chart (Aggregate per Ingredient)
+            // Doughnut Chart
             const bahanPieMap = {};
             allPengeluaran.forEach(p => {
                 if(p.items) {
@@ -939,14 +1012,14 @@
                     labels: labelsPie,
                     datasets: [{
                         data: dataPie,
-                        backgroundColor: ['#835a37', '#be9355', '#e0cca8', '#10b981', '#f43f5e', '#3b82f6', '#6366f1']
+                        backgroundColor: ['#835a37', '#be9355', '#e0cca8', '#10b981', '#f43f5e', '#3b82f6', '#6366f1', '#a855f7']
                     }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
-        // --- Helper Utilities ---
+        // --- Helpers ---
         function formatRupiah(num) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0);
         }
