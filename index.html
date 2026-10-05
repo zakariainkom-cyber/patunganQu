@@ -54,12 +54,16 @@
                 </div>
             </div>
 
-            <!-- Status Firebase -->
+            <!-- Status Firebase & Lock State -->
             <div class="flex items-center gap-3">
                 <div id="syncStatusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-800/80 text-amber-200 border border-amber-700">
                     <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
                     <span>Menghubungkan Database...</span>
                 </div>
+                <button id="authBtn" onclick="toggleAuthSession()" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 transition">
+                    <i class="fa-solid fa-lock text-amber-400" id="authBtnIcon"></i>
+                    <span id="authBtnText">Mode Baca</span>
+                </button>
             </div>
         </div>
     </header>
@@ -197,7 +201,7 @@
                                 <th class="p-2.5">Tanggal</th>
                                 <th class="p-2.5">Detail Rincian Item</th>
                                 <th class="p-2.5">Total Nota</th>
-                                <th class="p-2.5 text-center">Aksi</th>
+                                <th class="p-2.5 text-center col-aksi text-stone-400">Aksi</th>
                             </tr>
                         </thead>
                         <tbody id="tabelPengeluaranBody" class="divide-y divide-stone-100">
@@ -241,7 +245,7 @@
                             <th class="p-2.5">Bulan</th>
                             <th class="p-2.5">Nominal</th>
                             <th class="p-2.5 text-center">Status</th>
-                            <th class="p-2.5 text-center">Aksi</th>
+                            <th class="p-2.5 text-center col-aksi text-stone-400">Aksi</th>
                         </tr>
                     </thead>
                     <tbody id="tabelPatunganBody" class="divide-y divide-stone-100">
@@ -253,128 +257,171 @@
 
 
         <!-- ========================================== -->
-        <!-- SECTION 2: AREA INPUT DATA (BAGIAN BAWAH) -->
+        <!-- SECTION 2: AREA INPUT DATA (BAGIAN BAWAH COLLAPSIBLE) -->
         <!-- ========================================== -->
-        <div class="pt-8 border-t-2 border-dashed border-stone-300">
-            <div class="flex items-center gap-2 mb-6">
-                <div class="p-2 bg-amber-800 rounded-lg text-white">
-                    <i class="fa-solid fa-pen-to-square"></i>
+        <div class="pt-6 border-t-2 border-dashed border-stone-300">
+            <div class="bg-stone-200/60 p-4 sm:p-5 rounded-2xl border border-stone-300 flex flex-col sm:flex-row items-center justify-between gap-4 cursor-pointer hover:bg-stone-200 transition" onclick="toggleFormPanel()">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-amber-800 rounded-xl text-white shadow-sm">
+                        <i class="fa-solid fa-pen-to-square text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-stone-800 flex items-center gap-2">
+                            Panel Form Input & Kelola Master Data
+                            <span id="badgeLockForm" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300">
+                                <i class="fa-solid fa-lock"></i> Terkunci
+                            </span>
+                        </h2>
+                        <p class="text-xs text-stone-500">Gunakan form di bawah ini untuk mencatat belanja, kas patungan, atau memperbarui master bahan.</p>
+                    </div>
                 </div>
-                <div>
-                    <h2 class="text-lg font-bold text-stone-800">Panel Form Input & Kelola Master Data</h2>
-                    <p class="text-xs text-stone-500">Gunakan form di bawah ini untuk mencatat belanja, kas patungan, atau memperbarui master bahan.</p>
-                </div>
+                <button type="button" class="w-full sm:w-auto bg-amber-800 hover:bg-amber-900 text-white font-bold px-5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-sm">
+                    <span id="lblToggleForm">Buka Form Input</span>
+                    <i id="iconToggleForm" class="fa-solid fa-chevron-down transition-transform duration-300"></i>
+                </button>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Form Content (Collapsible Container) -->
+            <div id="panelFormInput" class="hidden mt-6 space-y-6">
                 
-                <!-- Form Catat Belanja Bahan Kopi (2 Kolom) -->
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
-                        <div class="flex items-center justify-between pb-4 mb-4 border-b border-stone-100">
-                            <div class="flex items-center gap-2.5">
-                                <div class="p-2 bg-amber-50 rounded-lg text-amber-700">
-                                    <i class="fa-solid fa-cart-plus text-lg"></i>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Form Catat Belanja Bahan Kopi (2 Kolom) -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                            <div class="flex items-center justify-between pb-4 mb-4 border-b border-stone-100">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="p-2 bg-amber-50 rounded-lg text-amber-700">
+                                        <i class="fa-solid fa-cart-plus text-lg"></i>
+                                    </div>
+                                    <h3 class="font-bold text-stone-800 text-base">Input Transaksi Belanja</h3>
                                 </div>
-                                <h3 class="font-bold text-stone-800 text-base">Input Transaksi Belanja</h3>
-                            </div>
-                            <button onclick="tambahBarisItem()" type="button" class="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-plus text-xs"></i> Tambah Item
-                            </button>
-                        </div>
-
-                        <form id="formPengeluaran" onsubmit="simpanPengeluaran(event)" class="space-y-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-600 mb-1">Tanggal Transaksi</label>
-                                    <input type="date" id="tglBelanja" required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50/50">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-stone-600 mb-1">Toko / Keterangan Belanja</label>
-                                    <input type="text" id="keteranganBelanja" placeholder="Contoh: Toko Bahan Kue ABC / Indomaret" class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50/50">
-                                </div>
-                            </div>
-
-                            <div class="space-y-2">
-                                <label class="block text-xs font-bold text-stone-600">Daftar Item Belanja</label>
-                                <div id="containerItemBelanja" class="space-y-2.5">
-                                    <!-- Dynamic Rows Injected by JS -->
-                                </div>
-                            </div>
-
-                            <div class="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-stone-100 gap-3">
-                                <div class="w-full sm:w-auto text-left">
-                                    <span class="text-xs text-stone-400 font-semibold uppercase tracking-wider block">Total Nota Ini</span>
-                                    <div id="labelTotalBelanjaNota" class="text-2xl font-black text-amber-800">Rp 0</div>
-                                </div>
-                                <button type="submit" class="w-full sm:w-auto bg-amber-800 hover:bg-amber-900 text-white font-bold px-7 py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 text-sm">
-                                    <i class="fa-solid fa-floppy-disk"></i> Simpan Belanja
+                                <button onclick="tambahBarisItem()" type="button" class="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-plus text-xs"></i> Tambah Item
                                 </button>
                             </div>
-                        </form>
-                    </div>
 
-                    <!-- Form Catat Patungan Anggota -->
-                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
-                        <div class="flex items-center gap-2.5 pb-4 mb-4 border-b border-stone-100">
-                            <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600">
-                                <i class="fa-solid fa-user-plus text-lg"></i>
-                            </div>
-                            <h3 class="font-bold text-stone-800 text-base">Kelola Input Patungan Anggota</h3>
+                            <form id="formPengeluaran" onsubmit="simpanPengeluaran(event)" class="space-y-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-bold text-stone-600 mb-1">Tanggal Transaksi</label>
+                                        <input type="date" id="tglBelanja" required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50/50">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-bold text-stone-600 mb-1">Toko / Keterangan Belanja</label>
+                                        <input type="text" id="keteranganBelanja" placeholder="Contoh: Toko Bahan Kue ABC / Indomaret" class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50/50">
+                                    </div>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label class="block text-xs font-bold text-stone-600">Daftar Item Belanja</label>
+                                    <div id="containerItemBelanja" class="space-y-2.5">
+                                        <!-- Dynamic Rows Injected by JS -->
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-stone-100 gap-3">
+                                    <div class="w-full sm:w-auto text-left">
+                                        <span class="text-xs text-stone-400 font-semibold uppercase tracking-wider block">Total Nota Ini</span>
+                                        <div id="labelTotalBelanjaNota" class="text-2xl font-black text-amber-800">Rp 0</div>
+                                    </div>
+                                    <button type="submit" class="w-full sm:w-auto bg-amber-800 hover:bg-amber-900 text-white font-bold px-7 py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 text-sm">
+                                        <i class="fa-solid fa-floppy-disk"></i> Simpan Belanja
+                                    </button>
+                                </div>
+                            </form>
                         </div>
 
-                        <form id="formPatungan" onsubmit="simpanPatungan(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-stone-600 mb-1">Nama Anggota</label>
-                                <input type="text" id="namaAnggota" placeholder="Nama anggota..." required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/50">
+                        <!-- Form Catat Patungan Anggota -->
+                        <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                            <div class="flex items-center gap-2.5 pb-4 mb-4 border-b border-stone-100">
+                                <div class="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+                                    <i class="fa-solid fa-user-plus text-lg"></i>
+                                </div>
+                                <h3 class="font-bold text-stone-800 text-base">Kelola Input Patungan Anggota</h3>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-stone-600 mb-1">Nominal (Rp)</label>
-                                <input type="number" id="nominalPatungan" placeholder="50000" required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/50">
+
+                            <form id="formPatungan" onsubmit="simpanPatungan(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-stone-600 mb-1">Nama Anggota</label>
+                                    <input type="text" id="namaAnggota" placeholder="Nama anggota..." required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/50">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-stone-600 mb-1">Nominal (Rp)</label>
+                                    <input type="number" id="nominalPatungan" placeholder="50000" required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/50">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-stone-600 mb-1">Bulan Patungan</label>
+                                    <input type="month" id="bulanPatungan" required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/50">
+                                </div>
+                                <div class="sm:col-span-3 flex justify-end">
+                                    <button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-sm text-xs sm:text-sm flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-check"></i> Simpan Kas Patungan
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Kelola Master Bahan (Kolom Kanan) -->
+                    <div class="space-y-6">
+                        <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
+                            <div class="flex items-center gap-2.5 pb-3 mb-3 border-b border-stone-100">
+                                <div class="p-2 bg-stone-100 rounded-lg text-stone-600">
+                                    <i class="fa-solid fa-tags text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-stone-800 text-base">Kelola Master Bahan</h3>
+                                    <p class="text-[11px] text-stone-400">Daftar preset bahan untuk dropdown belanja</p>
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-stone-600 mb-1">Bulan Patungan</label>
-                                <input type="month" id="bulanPatungan" required class="w-full border border-stone-300 rounded-xl p-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-stone-50/50">
-                            </div>
-                            <div class="sm:col-span-3 flex justify-end">
-                                <button type="submit" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition shadow-sm text-xs sm:text-sm flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-check"></i> Simpan Kas Patungan
+
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="inputPresetBaru" placeholder="Bahan baru (ex: Syrup Aren)" class="flex-1 border border-stone-300 rounded-xl p-2 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50/50">
+                                <button onclick="tambahMasterPreset()" type="button" class="bg-stone-800 hover:bg-stone-900 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
+                                    Tambah
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
 
-                <!-- Kelola Master Bahan (Kolom Kanan) -->
-                <div class="space-y-6">
-                    <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-stone-200">
-                        <div class="flex items-center gap-2.5 pb-3 mb-3 border-b border-stone-100">
-                            <div class="p-2 bg-stone-100 rounded-lg text-stone-600">
-                                <i class="fa-solid fa-tags text-lg"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-stone-800 text-base">Kelola Master Bahan</h3>
-                                <p class="text-[11px] text-stone-400">Daftar preset bahan untuk dropdown belanja</p>
+                            <div id="listMasterPresets" class="flex flex-wrap gap-1.5 max-h-60 overflow-y-auto p-1">
+                                <!-- JS Loaded -->
                             </div>
                         </div>
-
-                        <div class="flex gap-2 mb-3">
-                            <input type="text" id="inputPresetBaru" placeholder="Bahan baru (ex: Syrup Aren)" class="flex-1 border border-stone-300 rounded-xl p-2 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50/50">
-                            <button onclick="tambahMasterPreset()" type="button" class="bg-stone-800 hover:bg-stone-900 text-white text-xs font-bold px-4 py-2 rounded-xl transition">
-                                Tambah
-                            </button>
-                        </div>
-
-                        <div id="listMasterPresets" class="flex flex-wrap gap-1.5 max-h-60 overflow-y-auto p-1">
-                            <!-- JS Loaded -->
-                        </div>
                     </div>
-                </div>
 
+                </div>
             </div>
         </div>
 
     </main>
+
+    <!-- Modal Verification Password -->
+    <div id="passwordModal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl border border-stone-200 animate-in fade-in zoom-in duration-200">
+            <div class="text-center mb-5">
+                <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-amber-800 mx-auto mb-3 text-xl">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="text-lg font-bold text-stone-800">Verifikasi Otentikasi</h3>
+                <p class="text-xs text-stone-500 mt-1">Masukkan password khusus untuk membuka panel form input dan fitur hapus data.</p>
+            </div>
+            <form onsubmit="verifyPassword(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-stone-600 mb-1">Password Khusus</label>
+                    <input type="password" id="inputAuthPassword" placeholder="Masukkan password..." required class="w-full border border-stone-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-stone-50">
+                    <p id="authErrorMsg" class="text-xs font-semibold text-rose-600 mt-1 hidden"><i class="fa-solid fa-triangle-exclamation"></i> Password salah, silakan coba lagi.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closePasswordModal()" class="w-1/2 bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold py-2.5 rounded-xl text-xs transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="w-1/2 bg-amber-800 hover:bg-amber-900 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-md">
+                        Masuk Access
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Firebase App & Firestore Scripts (v10 Modular SDK) -->
     <script type="module">
@@ -407,7 +454,9 @@
             presetBahan: ["Kopi", "Susu UHT", "Gula Aren", "Cup 16oz", "Syrup Vanilla", "Sedotan"],
             presetDocs: [],
             db: null,
-            isOnline: false
+            isOnline: false,
+            isAuthenticated: false,
+            masterPass: "zr@99"
         };
 
         try {
@@ -482,6 +531,10 @@
         };
 
         window.dbTogglePatunganStatus = async function(id, currentStatus) {
+            if(!window.appState.isAuthenticated) {
+                window.openPasswordModal();
+                return;
+            }
             const newStatus = currentStatus === 'Lunas' ? 'Belum Lunas' : 'Lunas';
             if (window.appState.isOnline) {
                 await updateDoc(doc(window.appState.db, "patungan", id), { status: newStatus });
@@ -494,6 +547,7 @@
         };
 
         window.dbHapusPatungan = async function(id) {
+            if(!window.appState.isAuthenticated) return;
             if(confirm("Yakin ingin menghapus data patungan ini?")) {
                 if (window.appState.isOnline) {
                     await deleteDoc(doc(window.appState.db, "patungan", id));
@@ -516,6 +570,7 @@
         };
 
         window.dbHapusPengeluaran = async function(id) {
+            if(!window.appState.isAuthenticated) return;
             if(confirm("Yakin menghapus transaksi belanja ini?")) {
                 if (window.appState.isOnline) {
                     await deleteDoc(doc(window.appState.db, "pengeluaran", id));
@@ -541,6 +596,7 @@
         };
 
         window.dbHapusPreset = async function(nama) {
+            if(!window.appState.isAuthenticated) return;
             if (window.appState.isOnline) {
                 const target = window.appState.presetDocs.find(d => d.name === nama);
                 if(target) {
@@ -564,7 +620,95 @@
             initYearFilter();
             setDefaultDates();
             tambahBarisItem();
+            updateAuthUI();
         });
+
+        // --- Authentication & Lock System ---
+        function openPasswordModal() {
+            document.getElementById('authErrorMsg').classList.add('hidden');
+            document.getElementById('inputAuthPassword').value = '';
+            document.getElementById('passwordModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('inputAuthPassword').focus(), 100);
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+        }
+
+        function verifyPassword(e) {
+            e.preventDefault();
+            const entered = document.getElementById('inputAuthPassword').value;
+            if (entered === window.appState.masterPass) {
+                window.appState.isAuthenticated = true;
+                closePasswordModal();
+                updateAuthUI();
+                
+                // Show Panel Form Input automatically on unlock
+                const panel = document.getElementById('panelFormInput');
+                if (panel.classList.contains('hidden')) {
+                    toggleFormPanel(true);
+                }
+                
+                renderAll();
+            } else {
+                document.getElementById('authErrorMsg').classList.remove('hidden');
+            }
+        }
+
+        function toggleAuthSession() {
+            if (window.appState.isAuthenticated) {
+                window.appState.isAuthenticated = false;
+                updateAuthUI();
+                
+                // Collapse Form Panel
+                const panel = document.getElementById('panelFormInput');
+                if(!panel.classList.contains('hidden')) {
+                    toggleFormPanel(true);
+                }
+                renderAll();
+            } else {
+                openPasswordModal();
+            }
+        }
+
+        function updateAuthUI() {
+            const authBtnText = document.getElementById('authBtnText');
+            const authBtnIcon = document.getElementById('authBtnIcon');
+            const badgeLock = document.getElementById('badgeLockForm');
+
+            if (window.appState.isAuthenticated) {
+                authBtnText.textContent = "Akses Penuh";
+                authBtnIcon.className = "fa-solid fa-lock-open text-emerald-400";
+                badgeLock.className = "text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300";
+                badgeLock.innerHTML = `<i class="fa-solid fa-unlock"></i> Terbuka`;
+            } else {
+                authBtnText.textContent = "Mode Baca";
+                authBtnIcon.className = "fa-solid fa-lock text-amber-400";
+                badgeLock.className = "text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300";
+                badgeLock.innerHTML = `<i class="fa-solid fa-lock"></i> Terkunci`;
+            }
+        }
+
+        function toggleFormPanel(forceToggle = false) {
+            const panel = document.getElementById('panelFormInput');
+            const icon = document.getElementById('iconToggleForm');
+            const label = document.getElementById('lblToggleForm');
+
+            if (!forceToggle && !window.appState.isAuthenticated && panel.classList.contains('hidden')) {
+                openPasswordModal();
+                return;
+            }
+
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+                label.textContent = "Tutup Form Input";
+            } else {
+                panel.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+                label.textContent = "Buka Form Input";
+            }
+        }
 
         function setDefaultDates() {
             const today = new Date();
@@ -687,6 +831,11 @@
         // --- Core Form Handlers ---
         async function simpanPengeluaran(e) {
             e.preventDefault();
+            if(!window.appState.isAuthenticated) {
+                openPasswordModal();
+                return;
+            }
+
             const tanggal = document.getElementById('tglBelanja').value;
             const ket = document.getElementById('keteranganBelanja').value || 'Belanja Bahan';
 
@@ -740,6 +889,11 @@
 
         async function simpanPatungan(e) {
             e.preventDefault();
+            if(!window.appState.isAuthenticated) {
+                openPasswordModal();
+                return;
+            }
+
             const nama = document.getElementById('namaAnggota').value.trim();
             const nominal = parseFloat(document.getElementById('nominalPatungan').value) || 0;
             const bulanStr = document.getElementById('bulanPatungan').value;
@@ -760,6 +914,10 @@
         }
 
         function tambahMasterPreset() {
+            if(!window.appState.isAuthenticated) {
+                openPasswordModal();
+                return;
+            }
             const input = document.getElementById('inputPresetBaru');
             const val = input.value.trim();
             if(val) {
@@ -849,14 +1007,17 @@
                     ? `<button onclick="window.dbTogglePatunganStatus('${item.id}', '${item.status}')" class="px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200">LUNAS</button>`
                     : `<button onclick="window.dbTogglePatunganStatus('${item.id}', '${item.status}')" class="px-2 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 hover:bg-rose-200">BELUM</button>`;
 
+                // Tombol Hapus hanya tampil saat Authenticated
+                const deleteBtnHtml = window.appState.isAuthenticated 
+                    ? `<button onclick="window.dbHapusPatungan('${item.id}')" class="text-stone-400 hover:text-rose-600 p-1 title="Hapus"><i class="fa-solid fa-trash-can"></i></button>`
+                    : `<span class="text-stone-300 text-[10px] italic"><i class="fa-solid fa-lock text-[9px]"></i></span>`;
+
                 tr.innerHTML = `
                     <td class="p-2.5 font-bold text-stone-800">${item.nama}</td>
                     <td class="p-2.5 text-stone-600">${formatBulanYear(item.bulan)}</td>
                     <td class="p-2.5 font-extrabold text-emerald-700">${formatRupiah(item.nominal)}</td>
                     <td class="p-2.5 text-center">${badgeStatus}</td>
-                    <td class="p-2.5 text-center">
-                        <button onclick="window.dbHapusPatungan('${item.id}')" class="text-stone-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
+                    <td class="p-2.5 text-center col-aksi">${deleteBtnHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -884,13 +1045,16 @@
                     ).join('');
                 }
 
+                // Tombol Hapus hanya tampil saat Authenticated
+                const deleteBtnHtml = window.appState.isAuthenticated 
+                    ? `<button onclick="window.dbHapusPengeluaran('${item.id}')" class="text-stone-400 hover:text-rose-600 p-1" title="Hapus"><i class="fa-solid fa-trash-can"></i></button>`
+                    : `<span class="text-stone-300 text-[10px] italic"><i class="fa-solid fa-lock text-[9px]"></i></span>`;
+
                 tr.innerHTML = `
                     <td class="p-2.5 font-medium text-stone-700 whitespace-nowrap">${item.tanggal}<br><span class="text-[10px] text-stone-400 font-normal">${item.keterangan || ''}</span></td>
                     <td class="p-2.5">${rincianHtml}</td>
                     <td class="p-2.5 font-extrabold text-rose-700 whitespace-nowrap">${formatRupiah(item.totalPengeluaran)}</td>
-                    <td class="p-2.5 text-center">
-                        <button onclick="window.dbHapusPengeluaran('${item.id}')" class="text-stone-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash-can"></i></button>
-                    </td>
+                    <td class="p-2.5 text-center col-aksi">${deleteBtnHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -945,9 +1109,14 @@
             window.appState.presetBahan.forEach(p => {
                 const badge = document.createElement('div');
                 badge.className = "bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm";
+                
+                const deletePresetHtml = window.appState.isAuthenticated 
+                    ? `<button onclick="window.dbHapusPreset('${p}')" class="text-amber-400 hover:text-rose-600 font-bold ml-1 text-xs">×</button>`
+                    : '';
+
                 badge.innerHTML = `
                     <span>${p}</span>
-                    <button onclick="window.dbHapusPreset('${p}')" class="text-amber-400 hover:text-rose-600 font-bold ml-1 text-xs">×</button>
+                    ${deletePresetHtml}
                 `;
                 container.appendChild(badge);
             });
